@@ -1,0 +1,395 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Segoe UI', Arial, sans-serif;
+}
+
+body {
+    background: #f4f6f9;
+    min-height: 100vh;
+    padding: 30px 20px;
+}
+
+h1, .container > p {
+    text-align: center;
+    margin-top: 20px;
+}
+
+.container > p {
+    color: #777;
+    margin-bottom: 20px;
+}
+
+.brand-header {
+    display: flex;
+    justify-content: center;
+    margin-top: 20px;
+}
+
+.logo {
+    max-width: 280px;
+    width: 100%;
+    height: auto;
+}
+
+/* Upload box */
+.upload-box {
+    border: 2px dashed #E6177D;
+    border-radius: 8px;
+    padding: 30px 20px;
+    cursor: pointer;
+    transition: 0.3s;
+    color: #555;
+    text-align: center;
+    margin: 0 20px 20px 20px;
+}
+
+.upload-box:hover {
+    background: #fdf0f6;
+}
+
+.upload-box.dragover {
+    background: #fce4ee;
+    border-color: #1B3A5C;
+}
+
+/* Summary Banner (green) */
+.summary-banner {
+    background: linear-gradient(135deg, #E6177D, #c4126a);
+    color: white;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 30px;
+    flex-wrap: wrap;
+    gap: 15px;
+}
+
+.summary-left {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+.progress-circle {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background: conic-gradient(white var(--percent, 0%), rgba(255,255,255,0.3) 0%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    position: relative;
+}
+
+.progress-circle::before {
+    content: "";
+    position: absolute;
+    width: 60px;
+    height: 60px;
+    background: #E6177D;
+    border-radius: 50%;
+}
+
+.progress-circle span {
+    position: relative;
+    font-weight: bold;
+    font-size: 16px;
+    z-index: 1;
+}
+
+.summary-text h2 {
+    font-size: 20px;
+    margin-bottom: 5px;
+}
+
+.summary-text p {
+    font-size: 14px;
+    margin: 2px 0;
+}
+
+.zip-btn {
+    background: transparent;
+    border: 2px solid white;
+    color: white;
+    padding: 12px 20px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: bold;
+    font-size: 14px;
+    transition: 0.3s;
+    white-space: nowrap;
+}
+
+.zip-btn:hover {
+    background: rgba(255,255,255,0.2);
+}
+
+/* Table */
+.table-wrapper {
+    margin: 0 20px;
+    overflow-x: auto;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 600px;
+}
+
+thead tr {
+    background: #1B3A5C;
+    color: white;
+}
+
+thead th {
+    text-align: left;
+    padding: 14px 12px;
+    font-size: 14px;
+}
+
+tbody tr {
+    border-bottom: 1px solid #eee;
+}
+
+tbody tr:nth-child(even) {
+    background: #f9f9f9;
+}
+
+tbody td {
+    padding: 12px;
+    font-size: 14px;
+    vertical-align: middle;
+}
+
+.file-name-cell {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.file-name-cell img {
+    width: 36px;
+    height: 36px;
+    object-fit: cover;
+    border-radius: 4px;
+}
+
+.filename-text {
+    max-width: 220px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.status-pending {
+    color: #999;
+}
+
+.status-complete {
+    color: #28a745;
+    font-weight: bold;
+}
+
+.status-error {
+    color: #dc3545;
+    font-weight: bold;
+}
+
+.percentage-text {
+    color: #E6177D;
+    font-weight: bold;
+}
+
+.download-link {
+    color: #1B3A5C;
+    font-weight: bold;
+    text-decoration: none;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.download-link:hover {
+    color: #E6177D;
+    transform: translateX(2px);
+}
+
+.table-footer {
+    background: #1B3A5C;
+    color: white;
+    display: flex;
+    justify-content: space-around;
+    flex-wrap: wrap;
+    padding: 14px;
+    margin-top: 10px;
+    border-radius: 0 0 6px 6px;
+    font-size: 14px;
+    gap: 10px;
+}
+
+/* Mobile responsive */
+@media (max-width: 600px) {
+    .summary-banner {
+        flex-direction: column;
+        text-align: center;
+    }
+    .summary-left {
+        flex-direction: column;
+    }
+    table {
+        font-size: 12px;
+    }
+}
+/* ===== ANIMATIONS & POLISH ===== */
+
+/* Page load fade-in */
+.container {
+    animation: fadeInUp 0.5s ease;
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Upload box icon animation */
+.upload-box {
+    position: relative;
+}
+
+.upload-icon {
+    font-size: 36px;
+    display: block;
+    margin-bottom: 10px;
+    transition: transform 0.3s;
+}
+
+.upload-box:hover .upload-icon {
+    transform: translateY(-5px);
+}
+
+.upload-box.dragover {
+    transform: scale(1.02);
+}
+
+/* Table rows fade in one by one */
+tbody tr {
+    animation: fadeIn 0.4s ease;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+/* Spinner for "compressing" status */
+.spinner {
+    display: inline-block;
+    width: 14px;
+    height: 14px;
+    border: 2px solid #ccc;
+    border-top-color: #E6177D;
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+    margin-right: 6px;
+    vertical-align: middle;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* Progress circle smooth transition */
+.progress-circle {
+    transition: background 0.6s ease;
+}
+
+/* Summary banner slide in */
+.summary-banner {
+    animation: slideDown 0.4s ease;
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Download link hover effect */
+.download-link {
+    transition: all 0.2s;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.download-link:hover {
+    color: #667eea;
+    transform: translateX(2px);
+}
+
+/* ZIP button pulse on hover */
+.zip-btn {
+    position: relative;
+    overflow: hidden;
+}
+
+.zip-btn::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    background: rgba(255,255,255,0.3);
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    transition: width 0.4s, height 0.4s;
+}
+
+.zip-btn:hover::after {
+    width: 200px;
+    height: 200px;
+}
+
+.zip-btn span {
+    position: relative;
+    z-index: 1;
+}
+
+/* Status badge style upgrade */
+.status-pending, .status-complete, .status-error {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+/* Row hover highlight */
+tbody tr {
+    transition: background 0.2s;
+}
+
+tbody tr:hover {
+    background: #f0eefc !important;
+}
+
+/* Filename cell thumbnail polish */
+.file-name-cell img {
+    box-shadow: 0 1px 4px rgba(0,0,0,0.15);
+}
