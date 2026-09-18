@@ -1196,7 +1196,7 @@ window.addEventListener('resize', () => {
 });
 
 // ==========================================================================
-// Built-in Startup Loading Page (Initial App Launch Only - Exactly 5 Seconds)
+// Built-in Startup Loading Page (Initial App Launch Only - Exactly 4 Seconds)
 // ==========================================================================
 function initAppLoadingPage() {
     const loadingPage = document.getElementById('appLoadingPage');
@@ -1206,7 +1206,7 @@ function initAppLoadingPage() {
 
     if (!loadingPage || !loadingFill) return;
 
-    const DURATION_MS = 5000;
+    const DURATION_MS = 4000;
     const startTime = performance.now();
 
     function updateProgress(currentTime) {
