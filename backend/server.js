@@ -222,7 +222,28 @@ app.post('/compress-zip', upload.array('images'), async (req, res) => {
     }
 });
 
-// Start server
-app.listen(PORT, '0.0.0.0', () => {
-    console.log(`[Backend] Imress Ultra-Fast Server running at http://localhost:${PORT}`);
-});
+function startServer(port = 5000) {
+    return new Promise((resolve, reject) => {
+        const server = app.listen(port, '127.0.0.1', () => {
+            console.log(`[Backend] Imress Ultra-Fast Server running at http://127.0.0.1:${port}`);
+            resolve(server);
+        });
+
+        server.on('error', (err) => {
+            if (err.code === 'EADDRINUSE') {
+                console.log(`[Backend] Port ${port} is already active. Reusing running backend.`);
+                resolve(null);
+            } else {
+                reject(err);
+            }
+        });
+    });
+}
+
+// Standalone execution support
+if (require.main === module) {
+    const port = parseInt(process.env.PORT, 10) || 5000;
+    startServer(port);
+}
+
+module.exports = { app, startServer };

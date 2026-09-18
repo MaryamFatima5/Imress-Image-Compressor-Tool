@@ -6,6 +6,7 @@ const { spawn, execSync } = require('child_process');
 
 let mainWindow = null;
 let backendProcess = null;
+let embeddedServer = null;
 
 function isBackendRunning() {
     return new Promise((resolve) => {
@@ -27,31 +28,53 @@ async function startBackendIfNeeded() {
         return;
     }
 
-    console.log('[Electron] Auto-starting Python backend server...');
-    const pythonCmd = process.platform === 'win32' ? 'python' : 'python3';
-    const mainPyPath = path.join(__dirname, '..', 'backend', 'main.py');
+    // 1. Primary: Start the high-performance bundled Node.js + Sharp backend directly
+    try {
+        console.log('[Electron] Starting bundled Node.js Sharp backend on http://127.0.0.1:5000...');
+        const { startServer } = require('../backend/server.js');
+        embeddedServer = await startServer(5000);
+        console.log('[Electron] Bundled backend is active and ready on port 5000');
+        return;
+    } catch (nodeErr) {
+        console.warn('[Electron] Bundled Node backend failed to start, trying Python fallback:', nodeErr);
+    }
 
-    backendProcess = spawn(pythonCmd, [mainPyPath], {
-        cwd: path.join(__dirname, '..'),
-        stdio: 'ignore',
-        windowsHide: true
-    });
+    // 2. Fallback: If bundled Node server failed, attempt Python
+    try {
+        const pythonCmd = process.platform === 'win32' ? 'python' : 'python3';
+        const mainPyPath = path.join(__dirname, '..', 'backend', 'main.py');
 
-    backendProcess.on('error', (err) => {
-        console.error('[Electron] Failed to spawn Python backend:', err);
-    });
+        backendProcess = spawn(pythonCmd, [mainPyPath], {
+            cwd: path.join(__dirname, '..'),
+            stdio: 'ignore',
+            windowsHide: true
+        });
 
-    // Wait up to 10 seconds for backend server to become ready
-    for (let i = 0; i < 20; i++) {
-        await new Promise((resolve) => setTimeout(resolve, 500));
-        if (await isBackendRunning()) {
-            console.log('[Electron] Python backend is ready on http://127.0.0.1:5000');
-            break;
+        backendProcess.on('error', (err) => {
+            console.error('[Electron] Python fallback error:', err);
+        });
+
+        for (let i = 0; i < 20; i++) {
+            await new Promise((resolve) => setTimeout(resolve, 500));
+            if (await isBackendRunning()) {
+                console.log('[Electron] Python fallback backend is ready on http://127.0.0.1:5000');
+                break;
+            }
         }
+    } catch (pyErr) {
+        console.error('[Electron] Could not launch Python fallback:', pyErr);
     }
 }
 
 function killBackendProcess() {
+    if (embeddedServer) {
+        try {
+            embeddedServer.close();
+            console.log('[Electron] Closed embedded backend server');
+        } catch (err) {}
+        embeddedServer = null;
+    }
+
     if (backendProcess && backendProcess.pid) {
         try {
             if (process.platform === 'win32') {
@@ -73,7 +96,9 @@ function createWindow() {
         minWidth: 760,
         minHeight: 620,
         title: 'Imress - Image Compressor',
-        icon: path.join(__dirname, '..', 'frontend', 'static', 'images', 'logo.png'),
+        icon: process.platform === 'win32'
+            ? path.join(__dirname, '..', 'frontend', 'static', 'images', 'icon.ico')
+            : path.join(__dirname, '..', 'frontend', 'static', 'images', 'logo.png'),
         backgroundColor: '#fbfbfd',
         autoHideMenuBar: true,
         show: false,
