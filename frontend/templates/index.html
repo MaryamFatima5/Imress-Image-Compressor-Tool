@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Imress - Image Compressor</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+    <div class="container">
+
+        <div class="brand-header">
+            <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Imress Logo" class="logo">
+        </div>
+
+        <p>Upload multiple images and compress them instantly</p>
+
+        <div class="upload-box" id="uploadBox">
+            <input type="file" id="fileInput" accept="image/*" multiple hidden>
+            <span class="upload-icon">📤</span>
+            <p id="uploadText">Drag images here or click to upload</p>
+            <p style="font-size:13px; color:#999; margin-top:5px;">(Select multiple files — JPG, PNG, WEBP)</p>
+        </div>
+
+        <!-- Summary banner -->
+        <div id="summaryBanner" class="summary-banner" style="display:none;">
+            <div class="summary-left">
+                <div class="progress-circle" id="progressCircle">
+                    <span id="progressPercent">0%</span>
+                </div>
+                <div class="summary-text">
+                    <h2>WELL DONE!</h2>
+                    <p><span id="totalFilesText">0</span> Image(s) optimized successfully.</p>
+                    <p>You saved <span id="totalSaved">0KB</span> out of <span id="totalOriginal">0KB</span></p>
+                </div>
+            </div>
+            <button id="downloadZipBtn" class="zip-btn">
+                <span>📦 Download All as ZIP</span>
+            </button>
+        </div>
+
+        <!-- Table -->
+        <div id="tableWrapper" class="table-wrapper" style="display:none;">
+            <table id="filesTable">
+                <thead>
+                    <tr>
+                        <th>Filename</th>
+                        <th>Status</th>
+                        <th>Original</th>
+                        <th>Optimized</th>
+                        <th>Percentage</th>
+                        <th>Download</th>
+                    </tr>
+                </thead>
+                <tbody id="tableBody">
+                </tbody>
+            </table>
+
+            <div class="table-footer">
+                <span><span id="footerFileCount">0</span> File(s)</span>
+                <span><span id="footerErrorCount">0</span> Error(s)</span>
+                <span>Total Original: <span id="footerOriginal">0KB</span></span>
+                <span>Total Gain: <span id="footerGain">0KB</span></span>
+            </div>
+        </div>
+
+    </div>
+
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>
