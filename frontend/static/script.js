@@ -1194,3 +1194,69 @@ window.addEventListener('resize', () => {
         updateHeaderAddButtonVisibility();
     }
 });
+
+// ==========================================================================
+// Built-in Startup Loading Page (Initial App Launch Only - Exactly 5 Seconds)
+// ==========================================================================
+function initAppLoadingPage() {
+    const loadingPage = document.getElementById('appLoadingPage');
+    const loadingFill = document.getElementById('loadingBarFill');
+    const loadingPercent = document.getElementById('loadingPercentText');
+    const loadingStatus = document.getElementById('loadingStatusText');
+
+    if (!loadingPage || !loadingFill) return;
+
+    const DURATION_MS = 5000;
+    const startTime = performance.now();
+
+    function updateProgress(currentTime) {
+        const elapsed = currentTime - startTime;
+        const progress = Math.min(Math.max(elapsed / DURATION_MS, 0), 1);
+        const percent = Math.floor(progress * 100);
+
+        loadingFill.style.width = `${(progress * 100).toFixed(1)}%`;
+        if (loadingPercent) {
+            loadingPercent.textContent = `${percent}%`;
+        }
+
+        if (loadingStatus) {
+            if (progress < 0.25) {
+                loadingStatus.textContent = 'Starting Imress Engine...';
+            } else if (progress < 0.52) {
+                loadingStatus.textContent = 'Loading compression modules...';
+            } else if (progress < 0.78) {
+                loadingStatus.textContent = 'Optimizing workspace...';
+            } else if (progress < 0.95) {
+                loadingStatus.textContent = 'Finalizing setup...';
+            } else {
+                loadingStatus.textContent = 'Ready!';
+            }
+        }
+
+        if (progress < 1) {
+            requestAnimationFrame(updateProgress);
+        } else {
+            // Reached 100% at 5 seconds
+            loadingFill.style.width = '100%';
+            if (loadingPercent) loadingPercent.textContent = '100%';
+            if (loadingStatus) loadingStatus.textContent = 'Ready!';
+
+            // Elegant brief hold (120ms) then smooth fade out
+            setTimeout(() => {
+                loadingPage.classList.add('fade-out');
+                setTimeout(() => {
+                    loadingPage.style.display = 'none';
+                }, 600);
+            }, 120);
+        }
+    }
+
+    requestAnimationFrame(updateProgress);
+}
+
+// Start loading animation on app startup
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initAppLoadingPage);
+} else {
+    initAppLoadingPage();
+}

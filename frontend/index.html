@@ -12,6 +12,34 @@
 </head>
 <body>
 
+    <!-- Built-in App Startup Loading Page (Runs for 5 seconds on initial launch only) -->
+    <div id="appLoadingPage" class="app-loading-page" role="dialog" aria-label="Loading Imress">
+        <div class="loading-ambient-glow"></div>
+        
+        <div class="loading-center">
+            <div class="loading-logo-box">
+                <img src="static/images/logo.png" alt="Imress Logo" class="loading-logo-img" onerror="this.style.display='none'; document.getElementById('loadingLogoFallback').style.display='flex'">
+                <div id="loadingLogoFallback" class="logo-fallback" style="display:none;">
+                    <svg class="logo-symbol-svg" width="36" height="36" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"></path>
+                    </svg>
+                    <span class="logo-text" style="font-size: 32px;">IMRESS</span>
+                </div>
+            </div>
+
+            <!-- Sleek Professional Progress Bar directly under Logo -->
+            <div class="loading-bar-area">
+                <div class="loading-track">
+                    <div id="loadingBarFill" class="loading-fill"></div>
+                </div>
+                <div class="loading-bar-info">
+                    <span id="loadingStatusText" class="loading-bar-status">Starting Imress Engine...</span>
+                    <span id="loadingPercentText" class="loading-bar-percent">0%</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div class="app-wrapper">
 
         <!-- Top Header & Brand -->
