@@ -1249,8 +1249,6 @@ body {
 
 .stat-highlight {
     font-weight: 700;
-    text-decoration: underline;
-    text-underline-offset: 3px;
 }
 
 .summary-stats-pills {
@@ -1551,6 +1549,45 @@ body {
     box-shadow: 0 4px 12px rgba(230, 23, 125, 0.28);
     transform: translateY(-1px);
 }
+
+/* Table Action Buttons Group */
+.action-buttons-group {
+    display: inline-flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 8px;
+}
+
+/* Individual Table Row Remove / Cancel Cross Button */
+.btn-action-remove {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background: #FFFFFF;
+    border: 1.5px solid rgba(230, 23, 125, 0.4);
+    color: var(--primary);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: var(--transition);
+    box-shadow: 0 1px 4px rgba(230, 23, 125, 0.1);
+    padding: 0;
+    flex-shrink: 0;
+}
+
+.btn-action-remove:hover {
+    background: #EF4444;
+    border-color: #EF4444;
+    color: #FFFFFF;
+    transform: scale(1.15);
+    box-shadow: 0 3px 8px rgba(239, 68, 68, 0.38);
+}
+
+.btn-action-remove:active {
+    transform: scale(0.94);
+}
+
 
 /* ==========================================================================
    Table Footer Bar

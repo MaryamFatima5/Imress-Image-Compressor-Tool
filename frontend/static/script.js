@@ -490,10 +490,14 @@ function scrollToCompressionSection() {
     }
 }
 
-function followCompressingRow(index) {
+function followCompressingRow(idOrIndex) {
     if (userInteractedWithScroll) return;
 
-    const row = document.getElementById(`resultRow-${index}`);
+    let row = document.getElementById(`resultRow-${idOrIndex}`);
+    if (!row && typeof idOrIndex === 'number') {
+        const item = fileResults[idOrIndex];
+        if (item) row = document.getElementById(`resultRow-${item.id}`);
+    }
     if (!row) return;
 
     const rowRect = row.getBoundingClientRect();
@@ -545,8 +549,9 @@ async function startCompression() {
     if (compressingTitle) compressingTitle.textContent = 'Compressing Images...';
     if (compressingStatusText) compressingStatusText.textContent = `Compressing ${totalToCompress} images concurrently...`;
 
-    // Convert staged files into fileResults records
+    // Convert staged files into fileResults records with persistent IDs & abort controllers
     const newItems = stagedFiles.map(item => ({
+        id: item.id || ('img_' + Math.random().toString(36).substr(2, 9) + '_' + Date.now()),
         file: item.file,
         name: item.name,
         originalSize: item.size,
@@ -555,7 +560,8 @@ async function startCompression() {
         compressedBlob: null,
         outputName: item.name,
         previewUrl: item.thumbnailUrl,
-        status: 'pending'
+        status: 'pending',
+        abortController: null
     }));
 
     const startIndex = fileResults.length;
@@ -579,37 +585,50 @@ async function startCompression() {
     await new Promise(r => setTimeout(r, 350));
 
     // Parallel Concurrent Compression Engine (up to 4 concurrent workers)
-    let completedCount = 0;
-    let nextIndex = startIndex;
-    const maxIndex = fileResults.length;
-
     async function compressionWorker() {
-        while (nextIndex < maxIndex) {
-            const i = nextIndex++;
-            const item = fileResults[i];
-            item.status = 'compressing';
+        while (true) {
+            // Find next pending item dynamically (resistant to removals)
+            const item = fileResults.find(f => f.status === 'pending');
+            if (!item) break;
 
-            updateTableRow(i);
-            followCompressingRow(i);
+            item.status = 'compressing';
+            const abortController = new AbortController();
+            item.abortController = abortController;
+
+            updateTableRow(item.id);
+            followCompressingRow(item.id);
 
             if (compressingStatusText) {
                 compressingStatusText.textContent = `Compressing ${item.name}...`;
             }
 
             try {
-                const { blob, outputFilename } = await compressOne(item.file);
+                const { blob, outputFilename } = await compressOne(item.file, abortController.signal);
+                if (item.status === 'cancelled' || !fileResults.includes(item)) {
+                    continue;
+                }
                 item.compressedBlob = blob;
                 item.compressedSize = blob.size;
                 item.blobUrl = URL.createObjectURL(blob);
                 item.outputName = outputFilename || item.name;
                 item.status = 'complete';
             } catch (err) {
+                if (err.name === 'AbortError' || item.status === 'cancelled') {
+                    // Cancelled by user - move to next item smoothly
+                    continue;
+                }
                 console.error('Compression error for', item.name, err);
                 item.status = 'error';
             }
 
-            completedCount++;
-            const completedPct = Math.round((completedCount / totalToCompress) * 100);
+            if (!fileResults.includes(item)) {
+                continue;
+            }
+
+            const completedCount = fileResults.filter(f => f.status === 'complete').length;
+            const totalRemaining = fileResults.length;
+            const completedPct = totalRemaining > 0 ? Math.round((completedCount / totalRemaining) * 100) : 100;
+
             if (compressCircularBar) {
                 const circumference = 264;
                 const offset = circumference - (circumference * completedPct / 100);
@@ -619,15 +638,15 @@ async function startCompression() {
                 compressCircularPercent.textContent = `${completedPct}%`;
             }
             if (compressingStatusText) {
-                compressingStatusText.textContent = `Compressed ${completedCount} of ${totalToCompress} images...`;
+                compressingStatusText.textContent = `Compressed ${completedCount} of ${totalRemaining} images...`;
             }
 
-            updateTableRow(i);
+            updateTableRow(item.id);
             updateSummary();
         }
     }
 
-    const CONCURRENCY = Math.min(4, totalToCompress);
+    const CONCURRENCY = Math.min(4, Math.max(1, totalToCompress));
     const workerPromises = [];
     for (let w = 0; w < CONCURRENCY; w++) {
         workerPromises.push(compressionWorker());
@@ -637,6 +656,13 @@ async function startCompression() {
     // Finished compression
     isCompressing = false;
     startCompressBtn.disabled = false;
+
+    // If user cancelled/removed all files during compression
+    if (fileResults.length === 0) {
+        resetAllState();
+        return;
+    }
+
     if (summaryTitle) {
         summaryTitle.textContent = 'Compression Complete!';
     }
@@ -659,30 +685,33 @@ async function startCompression() {
     if (completionFinalSize) completionFinalSize.textContent = `${formatSize(totalComp)} (orig ${formatSize(totalOrig)})`;
 
     // 3. Reveal the Download All window inside the drop zone matching the UI theme
-    if (completionState) completionState.style.display = 'flex';
-    uploadBox.classList.add('has-completed');
-    uploadBox.classList.remove('has-staged');
+    if (completionState && completed.length > 0) {
+        completionState.style.display = 'flex';
+        uploadBox.classList.add('has-completed');
+        uploadBox.classList.remove('has-staged');
 
-    // Hide the lower redundant summaryBanner so the drop zone remains the clean hero download panel
-    if (summaryBanner) summaryBanner.style.display = 'none';
+        // Hide the lower redundant summaryBanner so the drop zone remains the clean hero download panel
+        if (summaryBanner) summaryBanner.style.display = 'none';
 
-    // 4. Auto scroll UI smoothly to the very top so the user sees the download window immediately
-    userInteractedWithScroll = false;
-    setTimeout(() => {
-        smoothScrollTo(0, 800, true);
-    }, 100);
+        // 4. Auto scroll UI smoothly to the very top so the user sees the download window immediately
+        userInteractedWithScroll = false;
+        setTimeout(() => {
+            smoothScrollTo(0, 800, true);
+        }, 100);
+    }
 
     // Clear staged files queue
     stagedFiles = [];
 }
 
-async function compressOne(file) {
+async function compressOne(file, signal) {
     const formData = new FormData();
     formData.append('image', file);
 
     const response = await fetch(`${API_BASE}/compress`, {
         method: 'POST',
-        body: formData
+        body: formData,
+        signal: signal
     });
 
     if (!response.ok) {
@@ -732,25 +761,55 @@ function getReductionBadgeHTML(item) {
     return '—';
 }
 
-function getActionHTML(item, index) {
+function getActionHTML(item) {
     if (item.status === 'complete') {
         return `
-            <button type="button" class="btn-action-download" onclick="downloadSingleFile(${index})">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                    <polyline points="7 10 12 15 17 10"></polyline>
-                    <line x1="12" y1="15" x2="12" y2="3"></line>
-                </svg>
-                <span>Download</span>
-            </button>
+            <div class="action-buttons-group">
+                <button type="button" class="btn-action-download" onclick="downloadSingleFile('${item.id}')">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                        <polyline points="7 10 12 15 17 10"></polyline>
+                        <line x1="12" y1="15" x2="12" y2="3"></line>
+                    </svg>
+                    <span>Download</span>
+                </button>
+                <button type="button" class="btn-action-remove" onclick="removeFileResult('${item.id}')" title="Remove image" aria-label="Remove image">
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                </button>
+            </div>
+        `;
+    } else if (item.status === 'compressing' || item.status === 'pending') {
+        return `
+            <div class="action-buttons-group">
+                <button type="button" class="btn-action-remove" onclick="removeFileResult('${item.id}')" title="Cancel & remove image" aria-label="Cancel image">
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                </button>
+            </div>
+        `;
+    } else if (item.status === 'error') {
+        return `
+            <div class="action-buttons-group">
+                <button type="button" class="btn-action-remove" onclick="removeFileResult('${item.id}')" title="Remove error image" aria-label="Remove image">
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                </button>
+            </div>
         `;
     }
     return '—';
 }
 
-function createTableRowElement(item, index) {
+function createTableRowElement(item) {
     const row = document.createElement('tr');
-    row.id = `resultRow-${index}`;
+    row.id = `resultRow-${item.id}`;
     row.className = `modern-table-row ${item.status === 'compressing' ? 'row-compressing' : ''} ${item.status === 'complete' ? 'row-complete' : ''} ${item.status === 'error' ? 'row-error' : ''}`;
 
     const originalText = formatSize(item.originalSize);
@@ -771,19 +830,24 @@ function createTableRowElement(item, index) {
         <td class="cell-orig"><strong>${originalText}</strong></td>
         <td class="cell-opt"><strong>${optimizedText}</strong></td>
         <td class="cell-reduc">${getReductionBadgeHTML(item)}</td>
-        <td class="cell-action" style="text-align: right;">${getActionHTML(item, index)}</td>
+        <td class="cell-action" style="text-align: right;">${getActionHTML(item)}</td>
     `;
 
     return row;
 }
 
-function updateTableRow(index) {
-    let row = document.getElementById(`resultRow-${index}`);
-    const item = fileResults[index];
+function updateTableRow(idOrIndex) {
+    let id = idOrIndex;
+    let item = fileResults.find(f => f.id === id);
+    if (!item && typeof idOrIndex === 'number') {
+        item = fileResults[idOrIndex];
+        if (item) id = item.id;
+    }
     if (!item) return;
 
+    let row = document.getElementById(`resultRow-${id}`);
     if (!row) {
-        row = createTableRowElement(item, index);
+        row = createTableRowElement(item);
         tableBody.appendChild(row);
         return;
     }
@@ -803,15 +867,15 @@ function updateTableRow(index) {
     if (cellReduc) cellReduc.innerHTML = getReductionBadgeHTML(item);
 
     const cellAction = row.querySelector('.cell-action');
-    if (cellAction) cellAction.innerHTML = getActionHTML(item, index);
+    if (cellAction) cellAction.innerHTML = getActionHTML(item);
 }
 
 function renderTable() {
     tableBody.innerHTML = '';
     headerFileCount.textContent = fileResults.length;
 
-    fileResults.forEach((item, index) => {
-        const row = createTableRowElement(item, index);
+    fileResults.forEach((item) => {
+        const row = createTableRowElement(item);
         tableBody.appendChild(row);
     });
 }
@@ -841,12 +905,86 @@ function updateSummary() {
     footerGain.textContent = formatSize(totalGain);
 }
 
+// Remove / Cancel a specific image from the table
+function removeFileResult(id) {
+    const itemIndex = fileResults.findIndex(f => f.id === id);
+    if (itemIndex === -1) return;
+
+    const item = fileResults[itemIndex];
+
+    // Abort active network request if compression is in-flight
+    if (item.abortController) {
+        try {
+            item.abortController.abort();
+        } catch (e) {
+            console.error('Abort error:', e);
+        }
+    }
+    item.status = 'cancelled';
+
+    // Free object URLs to prevent memory leaks
+    if (item.blobUrl) {
+        URL.revokeObjectURL(item.blobUrl);
+        item.blobUrl = null;
+    }
+    if (item.previewUrl) {
+        window.imressThumbnailer.revoke(item.previewUrl);
+        item.previewUrl = null;
+    }
+
+    // Remove from active records
+    fileResults.splice(itemIndex, 1);
+
+    // Smooth exit animation on DOM row
+    const row = document.getElementById(`resultRow-${id}`);
+    if (row) {
+        row.style.transition = 'all 0.22s ease';
+        row.style.opacity = '0';
+        row.style.transform = 'scale(0.96) translateX(12px)';
+        setTimeout(() => {
+            if (row.parentNode) row.parentNode.removeChild(row);
+        }, 220);
+    }
+
+    // If all files are removed, return cleanly to empty state
+    if (fileResults.length === 0) {
+        resetAllState();
+        return;
+    }
+
+    // Update table header and summary KPI metrics
+    headerFileCount.textContent = fileResults.length;
+    updateSummary();
+
+    // If actively compressing, refresh circular progress bar and text dynamically
+    if (isCompressing) {
+        const completedCount = fileResults.filter(f => f.status === 'complete').length;
+        const totalRemaining = fileResults.length;
+        const completedPct = totalRemaining > 0 ? Math.round((completedCount / totalRemaining) * 100) : 100;
+
+        if (compressCircularBar) {
+            const circumference = 264;
+            const offset = circumference - (circumference * completedPct / 100);
+            compressCircularBar.style.strokeDashoffset = offset;
+        }
+        if (compressCircularPercent) {
+            compressCircularPercent.textContent = `${completedPct}%`;
+        }
+        if (compressingStatusText) {
+            compressingStatusText.textContent = `Compressed ${completedCount} of ${totalRemaining} images...`;
+        }
+    }
+}
+window.removeFileResult = removeFileResult;
+
 // ==========================================================================
 // File Download & Native Electron Save
 // ==========================================================================
 
-async function downloadSingleFile(index) {
-    const item = fileResults[index];
+async function downloadSingleFile(idOrIndex) {
+    const item = typeof idOrIndex === 'string'
+        ? fileResults.find(f => f.id === idOrIndex)
+        : (fileResults.find(f => f.id === idOrIndex) || fileResults[idOrIndex]);
     if (!item) return;
 
     let blob = item.compressedBlob;
@@ -858,11 +996,15 @@ async function downloadSingleFile(index) {
             console.error('Failed to fetch blob URL:', e);
         }
     }
-    if (!blob) return;
+    if (!blob) {
+        alert('File is not ready yet or compression failed.');
+        return;
+    }
 
     const downloadName = item.outputName || item.name;
     await saveFile(downloadName, blob);
 }
+window.downloadSingleFile = downloadSingleFile;
 
 function blobToBase64(blob) {
     return new Promise((resolve, reject) => {
@@ -1014,6 +1156,7 @@ function resetAllState() {
         if (item.previewUrl) window.imressThumbnailer.revoke(item.previewUrl);
         if (item.blobUrl) URL.revokeObjectURL(item.blobUrl);
     });
+    if (fileInput) fileInput.value = '';
     clearStagedQueue();
     fileResults = [];
     tableBody.innerHTML = '';
@@ -1041,12 +1184,7 @@ if (completionClearBtn) {
 if (completionCloseBtn) {
     completionCloseBtn.addEventListener('click', (e) => {
         e.stopPropagation();
-        if (completionState) completionState.style.display = 'none';
-        uploadBox.classList.remove('has-completed');
-        uploadEmptyState.style.display = 'flex';
-        if (fileResults.length > 0 && summaryBanner) {
-            summaryBanner.style.display = 'block';
-        }
+        resetAllState();
     });
 }
 
