@@ -440,6 +440,47 @@ body {
 }
 
 /* ==========================================================================
+   Active Live Compression Circular Progress inside Dropzone
+   ========================================================================== */
+.compressing-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 24px 20px;
+    gap: 16px;
+    width: 100%;
+    animation: fadeIn 0.3s ease;
+}
+
+.compressing-info {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    text-align: center;
+}
+
+.compressing-title {
+    font-size: 17px;
+    font-weight: 800;
+    color: var(--text-main);
+    letter-spacing: -0.2px;
+}
+
+.compressing-status {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13.5px;
+    color: var(--text-secondary);
+    max-width: 520px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* ==========================================================================
    Staged Container & Scrollable Preview Grid
    ========================================================================== */
 
@@ -1080,7 +1121,7 @@ body {
 
 .modern-table tbody tr {
     border-bottom: 1px solid #F1F3F7;
-    transition: background-color 0.18s ease;
+    transition: background-color 0.25s ease, box-shadow 0.25s ease;
 }
 
 .modern-table tbody tr:last-child {
@@ -1089,6 +1130,20 @@ body {
 
 .modern-table tbody tr:hover {
     background-color: #FFF9FC;
+}
+
+/* Active row highlight while compressing - luxury pink glow */
+.modern-table tbody tr.row-compressing {
+    background: linear-gradient(90deg, rgba(230, 23, 125, 0.08) 0%, rgba(255, 46, 147, 0.03) 100%) !important;
+    box-shadow: inset 4px 0 0 var(--primary) !important;
+}
+
+.modern-table tbody tr.row-compressing td {
+    color: var(--text-main);
+}
+
+.modern-table tbody tr.row-complete {
+    transition: background-color 0.4s ease;
 }
 
 .modern-table td {

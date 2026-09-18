@@ -23,13 +23,17 @@ const stagedGridScroll = document.getElementById('stagedGridScroll');
 const addMoreFilesBtn = document.getElementById('addMoreFilesBtn');
 const clearStagedBtn = document.getElementById('clearStagedBtn');
 
+// DOM Elements - Live Compressing Circular Progress State
+const compressingState = document.getElementById('compressingState');
+const compressCircularBar = document.getElementById('compressCircularBar');
+const compressCircularPercent = document.getElementById('compressCircularPercent');
+const compressingTitle = document.getElementById('compressingTitle');
+const compressingStatusText = document.getElementById('compressingStatusText');
+
 // DOM Elements - Compress CTA
 const compressActionBar = document.getElementById('compressActionBar');
 const startCompressBtn = document.getElementById('startCompressBtn');
 const compressBtnText = document.getElementById('compressBtnText');
-const compressProgressIndicator = document.getElementById('compressProgressIndicator');
-const compressProgressFill = document.getElementById('compressProgressFill');
-const compressProgressStatus = document.getElementById('compressProgressStatus');
 
 // DOM Elements - KPI Summary & Results Table
 const summaryBanner = document.getElementById('summaryBanner');
@@ -136,6 +140,7 @@ function showScanningState(fileCount) {
     isScanning = true;
     uploadEmptyState.style.display = 'none';
     stagedContainer.style.display = 'none';
+    if (compressingState) compressingState.style.display = 'none';
     scanningState.style.display = 'flex';
     scanStatusText.textContent = `Scanning image 0 of ${fileCount}...`;
 
@@ -165,16 +170,20 @@ function updateHeaderAddButtonVisibility() {
 
 function renderStagedState() {
     if (stagedFiles.length === 0) {
-        // Return to clean empty state
-        uploadEmptyState.style.display = 'flex';
+        // Return to clean empty state only if not actively compressing
+        if (!isCompressing) {
+            uploadEmptyState.style.display = 'flex';
+            if (compressingState) compressingState.style.display = 'none';
+            uploadBox.classList.remove('has-staged');
+        }
         stagedContainer.style.display = 'none';
         compressActionBar.style.display = 'none';
-        uploadBox.classList.remove('has-staged');
         if (addMoreFilesBtn) addMoreFilesBtn.style.display = 'none';
         return;
     }
 
     uploadEmptyState.style.display = 'none';
+    if (compressingState) compressingState.style.display = 'none';
     stagedContainer.style.display = 'flex';
     compressActionBar.style.display = 'flex';
     uploadBox.classList.add('has-staged');
@@ -303,8 +312,8 @@ function clearStagedQueue() {
 uploadBox.addEventListener('click', (e) => {
     if (isScanning || isCompressing) return;
 
-    // Do not trigger file picker if clicked on cards, buttons, or scrollbar
-    if (e.target.closest('.staged-container') || e.target.closest('.compress-action-bar')) {
+    // Do not trigger file picker if clicked on cards, buttons, or active compression state
+    if (e.target.closest('.staged-container') || e.target.closest('.compress-action-bar') || e.target.closest('.compressing-state')) {
         return;
     }
     fileInput.click();
@@ -372,6 +381,122 @@ uploadBox.addEventListener('drop', (e) => {
 });
 
 // ==========================================================================
+// Professional Smooth Scroll Controller
+// Provides silky-smooth cubic-bezier tracking without browser jitter
+// ==========================================================================
+
+let activeScrollAnim = null;
+let userInteractedWithScroll = false;
+let isProgrammaticScrolling = false;
+
+// Once user scrolls up or down (wheel, touch, arrow keys, or scrollbar), stop auto-scrolling permanently
+function handleUserManualScroll() {
+    userInteractedWithScroll = true;
+    if (activeScrollAnim) {
+        cancelAnimationFrame(activeScrollAnim);
+        activeScrollAnim = null;
+    }
+}
+
+window.addEventListener('wheel', handleUserManualScroll, { passive: true });
+window.addEventListener('touchmove', handleUserManualScroll, { passive: true });
+window.addEventListener('keydown', (e) => {
+    const scrollKeys = ['ArrowUp', 'ArrowDown', 'PageUp', 'PageDown', 'Home', 'End', ' '];
+    if (scrollKeys.includes(e.key)) {
+        handleUserManualScroll();
+    }
+}, { passive: true });
+
+window.addEventListener('scroll', () => {
+    // If scroll occurred naturally (not via our step frame), user scrolled manually
+    if (!isProgrammaticScrolling && !userInteractedWithScroll) {
+        handleUserManualScroll();
+    }
+}, { passive: true });
+
+function smoothScrollTo(targetY, duration = 650, force = false) {
+    if (userInteractedWithScroll && !force) return;
+
+    if (activeScrollAnim) {
+        cancelAnimationFrame(activeScrollAnim);
+        activeScrollAnim = null;
+    }
+
+    const startY = window.scrollY || window.pageYOffset || document.documentElement.scrollTop;
+    const maxScroll = Math.max(0, document.documentElement.scrollHeight - window.innerHeight);
+    const clampedTarget = Math.max(0, Math.min(targetY, maxScroll));
+    const distance = clampedTarget - startY;
+
+    if (Math.abs(distance) < 2) return;
+
+    const startTime = performance.now();
+
+    function easeOutCubic(t) {
+        return 1 - Math.pow(1 - t, 3);
+    }
+
+    function step(currentTime) {
+        if (userInteractedWithScroll && !force) {
+            activeScrollAnim = null;
+            return;
+        }
+
+        const elapsed = currentTime - startTime;
+        const progress = Math.min(elapsed / duration, 1);
+        const ease = easeOutCubic(progress);
+
+        isProgrammaticScrolling = true;
+        window.scrollTo(0, startY + (distance * ease));
+        requestAnimationFrame(() => {
+            isProgrammaticScrolling = false;
+        });
+
+        if (progress < 1) {
+            activeScrollAnim = requestAnimationFrame(step);
+        } else {
+            activeScrollAnim = null;
+        }
+    }
+
+    activeScrollAnim = requestAnimationFrame(step);
+}
+
+function scrollToCompressionSection() {
+    userInteractedWithScroll = false;
+    if (summaryBanner) {
+        const bannerRect = summaryBanner.getBoundingClientRect();
+        const currentY = window.scrollY || window.pageYOffset;
+        // Position summaryBanner right near top of screen with 16px luxury breathing room
+        const targetY = currentY + bannerRect.top - 16;
+        smoothScrollTo(Math.max(0, targetY), 700, true);
+    }
+}
+
+function followCompressingRow(index) {
+    if (userInteractedWithScroll) return;
+
+    const row = document.getElementById(`resultRow-${index}`);
+    if (!row) return;
+
+    const rowRect = row.getBoundingClientRect();
+    const viewportHeight = window.innerHeight || document.documentElement.clientHeight;
+    const currentScrollY = window.scrollY || window.pageYOffset;
+
+    const rowAbsTop = currentScrollY + rowRect.top;
+
+    // Ideal screen line for active row: comfortably below the center (around 52% - 56% of viewport)
+    // so previous completed rows and upcoming pending rows are both visible
+    const idealScreenY = Math.min(viewportHeight * 0.54, viewportHeight - 140);
+    const desiredScrollY = Math.max(0, Math.round(rowAbsTop - idealScreenY));
+
+    // Only scroll downwards as compression proceeds further down
+    if (desiredScrollY > currentScrollY + 6) {
+        // "slow slow following": 800ms silky glide
+        smoothScrollTo(desiredScrollY, 800);
+    }
+}
+
+// ==========================================================================
 // Compression Engine (Triggered ONLY by Compress Button)
 // ==========================================================================
 
@@ -383,11 +508,24 @@ startCompressBtn.addEventListener('click', () => {
 async function startCompression() {
     isCompressing = true;
     startCompressBtn.disabled = true;
-    compressProgressIndicator.style.display = 'flex';
-    compressProgressFill.style.width = '0%';
 
     const totalToCompress = stagedFiles.length;
-    compressBtnText.textContent = `Compressing 1 of ${totalToCompress}...`;
+
+    // 1. Hide thumbnails & CTA action bar; reveal circular progress in drop zone
+    stagedContainer.style.display = 'none';
+    compressActionBar.style.display = 'none';
+    uploadEmptyState.style.display = 'none';
+    if (compressingState) compressingState.style.display = 'flex';
+
+    // Reset circular bar ring (circumference 264)
+    const CIRCLE_CIRCUMFERENCE = 264;
+    if (compressCircularBar) {
+        compressCircularBar.style.strokeDasharray = CIRCLE_CIRCUMFERENCE;
+        compressCircularBar.style.strokeDashoffset = CIRCLE_CIRCUMFERENCE;
+    }
+    if (compressCircularPercent) compressCircularPercent.textContent = '0%';
+    if (compressingTitle) compressingTitle.textContent = 'Compressing Images...';
+    if (compressingStatusText) compressingStatusText.textContent = `Starting optimization for ${totalToCompress} images...`;
 
     // Convert staged files into fileResults records
     const newItems = stagedFiles.map(item => ({
@@ -406,8 +544,19 @@ async function startCompression() {
     tableWrapper.style.display = 'flex';
     summaryBanner.style.display = 'block';
 
+    const summaryTitle = document.getElementById('summaryTitle');
+    if (summaryTitle) {
+        summaryTitle.textContent = 'Optimizing Images...';
+    }
+
     renderTable();
     updateSummary();
+
+    // 1. Instantly auto-scroll UI down to the compression dashboard section
+    scrollToCompressionSection();
+
+    // Brief pause so the user smoothly glides down into the view before processing starts
+    await new Promise(r => setTimeout(r, 400));
 
     // Sequentially compress files
     for (let i = startIndex; i < fileResults.length; i++) {
@@ -415,11 +564,21 @@ async function startCompression() {
         const currentNum = i - startIndex + 1;
 
         item.status = 'compressing';
-        compressBtnText.textContent = `Compressing ${currentNum} of ${totalToCompress}...`;
-        compressProgressStatus.textContent = `Compressing ${currentNum} of ${totalToCompress}: ${item.name}`;
-        compressProgressFill.style.width = `${Math.round(((currentNum - 0.5) / totalToCompress) * 100)}%`;
 
-        renderTable();
+        // Update circular bar progress in drop zone (real-time stream feel)
+        const inProgressPct = Math.round(((currentNum - 0.5) / totalToCompress) * 100);
+        if (compressCircularBar) {
+            const offset = CIRCLE_CIRCUMFERENCE - (CIRCLE_CIRCUMFERENCE * (inProgressPct / 100));
+            compressCircularBar.style.strokeDashoffset = offset;
+        }
+        if (compressCircularPercent) compressCircularPercent.textContent = `${inProgressPct}%`;
+        if (compressingStatusText) compressingStatusText.textContent = `Compressing ${currentNum} of ${totalToCompress}: ${item.name}`;
+
+        // Update single row in-place (flicker-free)
+        updateTableRow(i);
+
+        // 2. Slow, graceful auto-scroll following the active compressing row down (stops permanently if user manually scrolled)
+        followCompressingRow(i);
 
         try {
             const compressedBlob = await compressOne(item.file);
@@ -431,23 +590,42 @@ async function startCompression() {
             item.status = 'error';
         }
 
-        compressProgressFill.style.width = `${Math.round((currentNum / totalToCompress) * 100)}%`;
-        renderTable();
+        // Complete step for this image
+        const completedPct = Math.round((currentNum / totalToCompress) * 100);
+        if (compressCircularBar) {
+            const offset = CIRCLE_CIRCUMFERENCE - (CIRCLE_CIRCUMFERENCE * (completedPct / 100));
+            compressCircularBar.style.strokeDashoffset = offset;
+        }
+        if (compressCircularPercent) compressCircularPercent.textContent = `${completedPct}%`;
+
+        updateTableRow(i);
         updateSummary();
     }
 
     // Finished compression
     isCompressing = false;
     startCompressBtn.disabled = false;
-    compressBtnText.textContent = `✓ All ${totalToCompress} Compressed!`;
-    compressProgressStatus.textContent = `Optimization complete for all ${totalToCompress} images!`;
+    
+    if (compressCircularBar) compressCircularBar.style.strokeDashoffset = 0;
+    if (compressCircularPercent) compressCircularPercent.textContent = '100%';
+    if (compressingTitle) compressingTitle.textContent = '✓ Optimization Complete!';
+    if (compressingStatusText) compressingStatusText.textContent = `All ${totalToCompress} images optimized successfully!`;
 
-    // Clear the staging queue since all images have moved to processed table
+    if (summaryTitle) {
+        summaryTitle.textContent = 'Optimization Complete!';
+    }
+
+    // Smoothly ensure footer summary bar is visible if user is at the bottom of the table
+    const footerBar = document.querySelector('.table-footer-bar');
+    if (footerBar) {
+        const footerRect = footerBar.getBoundingClientRect();
+        if (footerRect.bottom > window.innerHeight) {
+            smoothScrollTo(window.scrollY + footerRect.bottom - window.innerHeight + 24, 700);
+        }
+    }
+
+    // Clear staged files queue
     stagedFiles = [];
-    renderStagedState();
-
-    // Smoothly scroll down to show results
-    summaryBanner.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 }
 
 async function compressOne(file) {
@@ -470,74 +648,112 @@ async function compressOne(file) {
 // Results Table & KPI Summary
 // ==========================================================================
 
+function getStatusBadgeHTML(status) {
+    if (status === 'pending') {
+        return `<span class="status-pill pending">⏳ Queued</span>`;
+    } else if (status === 'compressing') {
+        return `<span class="status-pill compressing"><span class="spinner-icon"></span> Compressing...</span>`;
+    } else if (status === 'complete') {
+        return `<span class="status-pill complete">✓ Ready</span>`;
+    } else if (status === 'error') {
+        return `<span class="status-pill error">✕ Failed</span>`;
+    }
+    return '';
+}
+
+function getReductionBadgeHTML(item) {
+    if (item.compressedSize && item.originalSize > 0) {
+        const diff = item.originalSize - item.compressedSize;
+        const percent = ((diff / item.originalSize) * 100).toFixed(1);
+        if (diff > 0) {
+            return `<span class="reduction-badge">-${percent}%</span>`;
+        } else {
+            return `<span class="reduction-badge" style="background:#f3f4f6; color:#6b7280; border:none;">0%</span>`;
+        }
+    }
+    return '—';
+}
+
+function getActionHTML(item, index) {
+    if (item.status === 'complete') {
+        return `
+            <button type="button" class="btn-action-download" onclick="downloadSingleFile(${index})">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                    <polyline points="7 10 12 15 17 10"></polyline>
+                    <line x1="12" y1="15" x2="12" y2="3"></line>
+                </svg>
+                <span>Download</span>
+            </button>
+        `;
+    }
+    return '—';
+}
+
+function createTableRowElement(item, index) {
+    const row = document.createElement('tr');
+    row.id = `resultRow-${index}`;
+    row.className = `modern-table-row ${item.status === 'compressing' ? 'row-compressing' : ''} ${item.status === 'complete' ? 'row-complete' : ''} ${item.status === 'error' ? 'row-error' : ''}`;
+
+    const originalText = formatSize(item.originalSize);
+    const optimizedText = item.compressedSize ? formatSize(item.compressedSize) : '—';
+    const ext = getFileExtension(item.name);
+
+    row.innerHTML = `
+        <td class="cell-file">
+            <div class="file-cell">
+                <img src="${item.previewUrl}" alt="Preview" class="file-thumbnail" onerror="this.src='static/images/logo.png'">
+                <div class="file-info">
+                    <span class="file-name-text" title="${item.name}">${item.name}</span>
+                    <span class="file-ext-tag">${ext} FORMAT</span>
+                </div>
+            </div>
+        </td>
+        <td class="cell-status">${getStatusBadgeHTML(item.status)}</td>
+        <td class="cell-orig"><strong>${originalText}</strong></td>
+        <td class="cell-opt"><strong>${optimizedText}</strong></td>
+        <td class="cell-reduc">${getReductionBadgeHTML(item)}</td>
+        <td class="cell-action" style="text-align: right;">${getActionHTML(item, index)}</td>
+    `;
+
+    return row;
+}
+
+function updateTableRow(index) {
+    let row = document.getElementById(`resultRow-${index}`);
+    const item = fileResults[index];
+    if (!item) return;
+
+    if (!row) {
+        row = createTableRowElement(item, index);
+        tableBody.appendChild(row);
+        return;
+    }
+
+    row.className = `modern-table-row ${item.status === 'compressing' ? 'row-compressing' : ''} ${item.status === 'complete' ? 'row-complete' : ''} ${item.status === 'error' ? 'row-error' : ''}`;
+
+    const cellStatus = row.querySelector('.cell-status');
+    if (cellStatus) cellStatus.innerHTML = getStatusBadgeHTML(item.status);
+
+    const cellOpt = row.querySelector('.cell-opt');
+    if (cellOpt) {
+        const optimizedText = item.compressedSize ? formatSize(item.compressedSize) : '—';
+        cellOpt.innerHTML = `<strong>${optimizedText}</strong>`;
+    }
+
+    const cellReduc = row.querySelector('.cell-reduc');
+    if (cellReduc) cellReduc.innerHTML = getReductionBadgeHTML(item);
+
+    const cellAction = row.querySelector('.cell-action');
+    if (cellAction) cellAction.innerHTML = getActionHTML(item, index);
+}
+
 function renderTable() {
     tableBody.innerHTML = '';
     headerFileCount.textContent = fileResults.length;
 
     fileResults.forEach((item, index) => {
-        const row = document.createElement('tr');
-
-        // Status Badge
-        let statusHTML = '';
-        if (item.status === 'pending') {
-            statusHTML = `<span class="status-pill pending">⏳ Queued</span>`;
-        } else if (item.status === 'compressing') {
-            statusHTML = `<span class="status-pill compressing"><span class="spinner-icon"></span> Compressing...</span>`;
-        } else if (item.status === 'complete') {
-            statusHTML = `<span class="status-pill complete">✓ Ready</span>`;
-        } else if (item.status === 'error') {
-            statusHTML = `<span class="status-pill error">✕ Failed</span>`;
-        }
-
-        const originalText = formatSize(item.originalSize);
-        const optimizedText = item.compressedSize ? formatSize(item.compressedSize) : '—';
-
-        // Reduction %
-        let percentHTML = '—';
-        if (item.compressedSize && item.originalSize > 0) {
-            const diff = item.originalSize - item.compressedSize;
-            const percent = ((diff / item.originalSize) * 100).toFixed(1);
-            if (diff > 0) {
-                percentHTML = `<span class="reduction-badge">-${percent}%</span>`;
-            } else {
-                percentHTML = `<span class="reduction-badge" style="background:#f3f4f6; color:#6b7280; border:none;">0%</span>`;
-            }
-        }
-
-        // Action / Download
-        let actionHTML = '—';
-        if (item.status === 'complete') {
-            actionHTML = `
-                <button class="btn-action-download" onclick="downloadSingleFile(${index})">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                        <polyline points="7 10 12 15 17 10"></polyline>
-                        <line x1="12" y1="15" x2="12" y2="3"></line>
-                    </svg>
-                    <span>Download</span>
-                </button>
-            `;
-        }
-
-        const ext = getFileExtension(item.name);
-
-        row.innerHTML = `
-            <td>
-                <div class="file-cell">
-                    <img src="${item.previewUrl}" alt="Preview" class="file-thumbnail" onerror="this.src='static/images/logo.png'">
-                    <div class="file-info">
-                        <span class="file-name-text" title="${item.name}">${item.name}</span>
-                        <span class="file-ext-tag">${ext} FORMAT</span>
-                    </div>
-                </div>
-            </td>
-            <td>${statusHTML}</td>
-            <td><strong>${originalText}</strong></td>
-            <td><strong>${optimizedText}</strong></td>
-            <td>${percentHTML}</td>
-            <td style="text-align: right;">${actionHTML}</td>
-        `;
-
+        const row = createTableRowElement(item, index);
         tableBody.appendChild(row);
     });
 }
@@ -667,7 +883,11 @@ if (clearAllBtn) {
         tableBody.innerHTML = '';
         tableWrapper.style.display = 'none';
         summaryBanner.style.display = 'none';
-        compressProgressIndicator.style.display = 'none';
+        if (compressingState) compressingState.style.display = 'none';
+        uploadEmptyState.style.display = 'flex';
+        uploadBox.classList.remove('has-staged');
+        // Smoothly scroll back to top
+        smoothScrollTo(0, 500, true);
     });
 }
 

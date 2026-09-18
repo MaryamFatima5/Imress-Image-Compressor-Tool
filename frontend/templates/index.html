@@ -129,6 +129,32 @@
                     </div>
                 </div>
 
+                <!-- 4. Active Live Compression Circular Progress State -->
+                <div class="compressing-state" id="compressingState" style="display: none;">
+                    <div class="circular-progress-wrap">
+                        <svg class="circular-progress-svg" viewBox="0 0 100 100">
+                            <defs>
+                                 <linearGradient id="circleCompressGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                                     <stop offset="0%" stop-color="#FF2E93" />
+                                     <stop offset="100%" stop-color="#E6177D" />
+                                 </linearGradient>
+                            </defs>
+                            <circle class="circle-track" cx="50" cy="50" r="42" />
+                            <circle class="circle-bar" id="compressCircularBar" cx="50" cy="50" r="42" />
+                        </svg>
+                        <div class="circular-progress-content">
+                            <span class="circular-percent" id="compressCircularPercent" style="font-size: 22px;">0%</span>
+                        </div>
+                    </div>
+                    <div class="compressing-info">
+                        <h4 class="compressing-title" id="compressingTitle">Compressing Images...</h4>
+                        <p class="compressing-status">
+                            <span class="pulse-dot-pink"></span>
+                            <span id="compressingStatusText">Starting optimization...</span>
+                        </p>
+                    </div>
+                </div>
+
             </div>
 
             <!-- Compress CTA Action Bar -->
@@ -139,12 +165,6 @@
                     </svg>
                     <span id="compressBtnText">Compress All (0 Images)</span>
                 </button>
-                <div class="compress-progress-indicator" id="compressProgressIndicator" style="display: none;">
-                    <div class="compress-progress-track">
-                        <div class="compress-progress-fill" id="compressProgressFill" style="width: 0%;"></div>
-                    </div>
-                    <span class="compress-progress-status" id="compressProgressStatus">Compressing 0 of 0...</span>
-                </div>
             </div>
 
             <!-- Summary KPI Banner -->
@@ -161,7 +181,7 @@
                         </div>
 
                         <div class="summary-info">
-                            <h2 class="summary-title">Optimization Complete!</h2>
+                            <h2 class="summary-title" id="summaryTitle">Optimization Complete!</h2>
                             <p class="summary-detail"><span id="totalFilesText" class="stat-highlight">0</span> image(s) compressed successfully</p>
                             <div class="summary-stats-pills">
                                 <span class="stat-pill">Saved: <strong id="totalSaved">0 KB</strong></span>
