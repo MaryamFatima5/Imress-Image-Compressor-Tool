@@ -68,20 +68,29 @@ function killBackendProcess() {
 
 function createWindow() {
     mainWindow = new BrowserWindow({
-        width: 1020,
-        height: 800,
+        width: 1200,
+        height: 850,
         minWidth: 760,
         minHeight: 620,
         title: 'Imress - Image Compressor',
         icon: path.join(__dirname, '..', 'frontend', 'static', 'images', 'logo.png'),
         backgroundColor: '#fbfbfd',
         autoHideMenuBar: true,
+        show: false,
         webPreferences: {
             preload: path.join(__dirname, 'preload.js'),
             nodeIntegration: false,
             contextIsolation: true,
             devTools: true
         }
+    });
+
+    // Ensure window always opens maximized/full screen on every launch, in dev and after build
+    mainWindow.maximize();
+
+    mainWindow.once('ready-to-show', () => {
+        mainWindow.maximize();
+        mainWindow.show();
     });
 
     const indexHtmlPath = path.join(__dirname, '..', 'frontend', 'index.html');

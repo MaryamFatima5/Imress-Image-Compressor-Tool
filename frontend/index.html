@@ -19,7 +19,9 @@
             <div class="brand-container">
                 <img src="static/images/logo.png" alt="Imress Logo" class="brand-logo" onerror="this.style.display='none'; document.getElementById('logoFallback').style.display='flex'">
                 <div id="logoFallback" class="logo-fallback" style="display:none;">
-                    <span class="logo-symbol">⚡</span>
+                    <svg class="logo-symbol-svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"></path>
+                    </svg>
                     <span class="logo-text">IMRESS</span>
                 </div>
                 <div class="badge-pill">
@@ -125,7 +127,12 @@
 
                     <!-- Drop more hint inside staged view -->
                     <div class="staged-drop-hint">
-                        <span>💡 Drag & drop additional files here anytime</span>
+                        <svg class="hint-svg-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M9 18h6"></path>
+                            <path d="M10 22h4"></path>
+                            <path d="M12 2a7 7 0 0 0-7 7c0 2.5 1.5 4.5 3 6h8c1.5-1.5 3-3.5 3-6a7 7 0 0 0-7-7z"></path>
+                        </svg>
+                        <span>Drag & drop additional files here anytime</span>
                     </div>
                 </div>
 
@@ -285,11 +292,6 @@
             </section>
 
         </main>
-
-        <!-- Footer -->
-        <footer class="app-footer">
-            <p>© 2026 Imress Compressor • Built with Node.js & Electron</p>
-        </footer>
 
     </div>
 

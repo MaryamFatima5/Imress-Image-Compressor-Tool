@@ -737,13 +737,13 @@ async function compressOne(file, signal) {
 
 function getStatusBadgeHTML(status) {
     if (status === 'pending') {
-        return `<span class="status-pill pending">⏳ Queued</span>`;
+        return `<span class="status-pill pending"><svg class="status-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg><span>Queued</span></span>`;
     } else if (status === 'compressing') {
-        return `<span class="status-pill compressing"><span class="spinner-icon"></span> Compressing...</span>`;
+        return `<span class="status-pill compressing"><span class="spinner-icon"></span><span>Compressing...</span></span>`;
     } else if (status === 'complete') {
-        return `<span class="status-pill complete">✓ Ready</span>`;
+        return `<span class="status-pill complete"><svg class="status-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg><span>Ready</span></span>`;
     } else if (status === 'error') {
-        return `<span class="status-pill error">✕ Failed</span>`;
+        return `<span class="status-pill error"><svg class="status-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg><span>Failed</span></span>`;
     }
     return '';
 }
