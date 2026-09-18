@@ -1,7 +1,19 @@
+import os
+import sys
 import threading
-import webview
 import base64
-from app import app
+
+# Ensure backend directory is in sys.path so 'app' can always be imported
+backend_dir = os.path.dirname(os.path.abspath(__file__))
+if backend_dir not in sys.path:
+    sys.path.insert(0, backend_dir)
+
+try:
+    from app import app
+except ImportError:
+    from backend.app import app
+
+import webview
 
 webview.settings['ALLOW_DOWNLOADS'] = True
 
