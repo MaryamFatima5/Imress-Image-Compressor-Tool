@@ -109,33 +109,51 @@ async function saveFile(filename, blob) {
             const res = await window.electronAPI.saveFile(filename, uint8);
             if (res && res.success) {
                 console.log('Saved successfully via Electron to:', res.filePath);
-                return;
+                return true;
             }
             if (res && res.cancelled) {
                 console.log('User cancelled save dialog');
-                return;
+                return false;
             }
         } catch (err) {
             console.warn('Fast Electron binary save failed, trying base64 fallback:', err);
             try {
                 const base64data = await blobToBase64(blob);
                 const res = await window.electronAPI.saveFile(filename, base64data);
-                if (res && (res.success || res.cancelled)) return;
+                if (res && res.success) return true;
+                if (res && res.cancelled) return false;
             } catch (b64Err) {
                 console.warn('Base64 save failed, falling back to browser download:', b64Err);
             }
         }
     }
 
+    // 1b. PyWebView API (if running under pywebview desktop.py)
+    if (window.pywebview && window.pywebview.api && typeof window.pywebview.api.save_file === 'function') {
+        try {
+            const base64data = await blobToBase64(blob);
+            const success = await window.pywebview.api.save_file(filename, base64data);
+            return !!success;
+        } catch (pwErr) {
+            console.warn('PyWebView save failed:', pwErr);
+        }
+    }
+
     // 2. Standard Web Browser anchor download
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = filename;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    try {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
+        return true;
+    } catch (e) {
+        console.error('Browser save failed:', e);
+        return false;
+    }
 }
 
 // Built-in Startup Loading Page (Initial App Launch Only - Exactly 4 Seconds)

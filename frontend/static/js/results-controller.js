@@ -34,13 +34,13 @@ function getActionHTML(item) {
     if (item.status === 'complete') {
         return `
             <div class="action-buttons-group">
-                <button type="button" class="btn-action-download" onclick="downloadSingleFile('${item.id}')">
+                <button type="button" class="btn-action-download" onclick="downloadSingleFile('${item.id}')" title="Save image" aria-label="Save image">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
                         <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
                         <polyline points="7 10 12 15 17 10"></polyline>
                         <line x1="12" y1="15" x2="12" y2="3"></line>
                     </svg>
-                    <span>Download</span>
+                    <span>Save</span>
                 </button>
                 <button type="button" class="btn-action-remove" onclick="removeFileResult('${item.id}')" title="Remove image" aria-label="Remove image">
                     <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round">
@@ -172,6 +172,13 @@ function updateSummary() {
     footerErrorCount.textContent = errors.length;
     footerOriginal.textContent = formatSize(totalOrig);
     footerGain.textContent = formatSize(totalGain);
+
+    if (completionFilesCount) {
+        completionFilesCount.textContent = completed.length;
+    }
+    if (completed.length === 0 && completionState) {
+        completionState.style.display = 'none';
+    }
 }
 
 // Remove / Cancel a specific image from the table
@@ -250,7 +257,7 @@ async function downloadSingleFile(idOrIndex) {
     const item = typeof idOrIndex === 'string'
         ? fileResults.find(f => f.id === idOrIndex)
         : (fileResults.find(f => f.id === idOrIndex) || fileResults[idOrIndex]);
-    if (!item) return;
+    if (!item || item.isSaving) return;
 
     let blob = item.compressedBlob;
     if (!blob && item.blobUrl) {
@@ -266,10 +273,46 @@ async function downloadSingleFile(idOrIndex) {
         return;
     }
 
-    const downloadName = item.outputName || item.name;
-    await saveFile(downloadName, blob);
+    const row = document.getElementById(`resultRow-${item.id}`);
+    const saveBtn = row ? row.querySelector('.btn-action-download') : null;
+    const origBtnHtml = saveBtn ? saveBtn.innerHTML : null;
+
+    try {
+        item.isSaving = true;
+        if (saveBtn) {
+            saveBtn.disabled = true;
+            saveBtn.style.opacity = '0.7';
+            saveBtn.innerHTML = `
+                <span class="spinner-icon" style="width:12px; height:12px; border-width:1.8px; margin-right:4px;"></span>
+                <span>Saving...</span>
+            `;
+        }
+
+        const downloadName = item.outputName || item.name;
+        const saved = await saveFile(downloadName, blob);
+        if (saved) {
+            // Disappear smoothly after saving
+            removeFileResult(item.id);
+        } else {
+            item.isSaving = false;
+            if (saveBtn) {
+                saveBtn.disabled = false;
+                saveBtn.style.opacity = '1';
+                if (origBtnHtml) saveBtn.innerHTML = origBtnHtml;
+            }
+        }
+    } catch (err) {
+        console.error('Failed to save individual file:', err);
+        item.isSaving = false;
+        if (saveBtn) {
+            saveBtn.disabled = false;
+            saveBtn.style.opacity = '1';
+            if (origBtnHtml) saveBtn.innerHTML = origBtnHtml;
+        }
+    }
 }
 window.downloadSingleFile = downloadSingleFile;
+window.saveSingleFile = downloadSingleFile;
 
 // Shared Batch ZIP download function - Instant client-side bundling
 async function downloadAllAsZip(btnElement, textElement) {
@@ -281,6 +324,7 @@ async function downloadAllAsZip(btnElement, textElement) {
     if (btnElement) btnElement.disabled = true;
 
     try {
+        let saved = false;
         if (typeof JSZip !== 'undefined') {
             const zip = new JSZip();
             const usedNames = new Set();
@@ -316,28 +360,37 @@ async function downloadAllAsZip(btnElement, textElement) {
                 compression: 'STORE'
             });
 
-            await saveFile('compressed_images.zip', zipBlob);
-            return;
+            saved = await saveFile('compressed_images.zip', zipBlob);
+        } else {
+            // Fallback to server /compress-zip if JSZip library is not present
+            const formData = new FormData();
+            completedFiles.forEach(item => {
+                formData.append('images', item.file);
+            });
+
+            const response = await fetch(`${API_BASE}/compress-zip`, {
+                method: 'POST',
+                body: formData
+            });
+
+            if (!response.ok) {
+                throw new Error(`Server returned ${response.status}: ${response.statusText}`);
+            }
+
+            const fallbackBlob = await response.blob();
+            saved = await saveFile('compressed_images.zip', fallbackBlob);
         }
 
-        // Fallback to server /compress-zip if JSZip library is not present
-        const formData = new FormData();
-        completedFiles.forEach(item => {
-            formData.append('images', item.file);
-        });
-
-        const response = await fetch(`${API_BASE}/compress-zip`, {
-            method: 'POST',
-            body: formData
-        });
-
-        if (!response.ok) {
-            throw new Error(`Server returned ${response.status}: ${response.statusText}`);
+        if (saved) {
+            // After saving ZIP, all saved files disappear
+            const hasRemaining = fileResults.some(f => f.status !== 'complete');
+            if (!hasRemaining) {
+                resetAllState();
+            } else {
+                const idsToRemove = completedFiles.map(f => f.id);
+                idsToRemove.forEach(id => removeFileResult(id));
+            }
         }
-
-        const fallbackBlob = await response.blob();
-        await saveFile('compressed_images.zip', fallbackBlob);
-
     } catch (err) {
         console.error('Failed to generate ZIP archive:', err);
         alert('Failed to generate ZIP archive: ' + err.message);
