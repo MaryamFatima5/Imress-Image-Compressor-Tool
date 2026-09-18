@@ -62,14 +62,15 @@ class Api:
             return False
 
 
-def run_flask():
-    app.run(port=5000, debug=False, use_reloader=False)
+def run_server():
+    import uvicorn
+    uvicorn.run(app, host="127.0.0.1", port=5000, log_level="warning")
 
 
 if __name__ == '__main__':
-    flask_thread = threading.Thread(target=run_flask)
-    flask_thread.daemon = True
-    flask_thread.start()
+    server_thread = threading.Thread(target=run_server)
+    server_thread.daemon = True
+    server_thread.start()
 
     api = Api()
 

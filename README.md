@@ -55,12 +55,11 @@ No internet connection required. No image uploads to any server. Everything runs
 
 | Layer | Technology |
 |-------|-----------|
-| Backend | Python, Flask |
-| Image Processing | Pillow (PIL) |
-| Frontend | HTML5, CSS3, JavaScript |
-| Desktop Window | PyWebView |
-| Packaging | PyInstaller |
-| Installer | Inno Setup 6 |
+| Backend Engine | Python 3.8+, FastAPI, Uvicorn |
+| Core Compression | Pillow, libimagequant (TinyPNG engine), pillow-heif (HEIC/AVIF) |
+| Parallel Processing | ThreadPoolExecutor Worker Pool |
+| Frontend | HTML5, Modern Vanilla CSS3, JavaScript (Preserved UI) |
+| Desktop App | Electron 31+ / PyWebView 5+ |
 
 ---
 

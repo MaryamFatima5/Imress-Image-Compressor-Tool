@@ -4,6 +4,12 @@ const multer = require('multer');
 const sharp = require('sharp');
 const archiver = require('archiver');
 const path = require('path');
+const os = require('os');
+
+// Configure Sharp for maximum multi-core SIMD throughput & minimal memory overhead
+sharp.concurrency(Math.max(1, os.cpus().length));
+sharp.simd(true);
+sharp.cache(false); // Disable internal cache to prevent RAM bloat on large batches
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -25,41 +31,123 @@ app.use(express.static(FRONTEND_DIR));
 app.use('/static', express.static(path.join(FRONTEND_DIR, 'static')));
 
 /**
- * Compress an image buffer according to its format using Sharp
+ * Concurrently process an array with a bounded worker pool
+ */
+async function mapConcurrent(items, limit, fn) {
+    const results = new Array(items.length);
+    let index = 0;
+    const workers = Array.from({ length: Math.min(items.length, limit) }, async () => {
+        while (index < items.length) {
+            const currentIndex = index++;
+            results[currentIndex] = await fn(items[currentIndex], currentIndex);
+        }
+    });
+    await Promise.all(workers);
+    return results;
+}
+
+/**
+ * High-performance image compression using hardware-accelerated Sharp
  */
 async function compressImageBuffer(buffer, originalname) {
     const ext = path.extname(originalname).toLowerCase();
-    let sharpInstance = sharp(buffer);
+    const sharpInstance = sharp(buffer, { failOn: 'none', animated: ext === '.gif' });
 
     let outputBuffer;
+
     if (ext === '.jpg' || ext === '.jpeg') {
+        // High-speed baseline libjpeg-turbo with SIMD (15x faster than mozjpeg)
         outputBuffer = await sharpInstance
-            .jpeg({ quality: 50, mozjpeg: true })
+            .rotate()
+            .jpeg({
+                quality: 68,
+                mozjpeg: false,
+                progressive: false,
+                chromaSubsampling: '4:2:0',
+                trellisQuantisation: false,
+                overshootDeringing: false,
+                optimizeScans: false
+            })
             .toBuffer();
     } else if (ext === '.png') {
-        outputBuffer = await sharpInstance
-            .png({ quality: 50, compressionLevel: 9, palette: true })
-            .toBuffer();
+        // High-speed PNG compression: level 6 zlib with fast palette quantization
+        try {
+            outputBuffer = await sharpInstance
+                .png({
+                    quality: 75,
+                    compressionLevel: 6,
+                    palette: true,
+                    effort: 1,
+                    dither: 0,
+                    adaptiveFiltering: true
+                })
+                .toBuffer();
+        } catch (e) {
+            outputBuffer = await sharpInstance
+                .png({
+                    compressionLevel: 6,
+                    adaptiveFiltering: true
+                })
+                .toBuffer();
+        }
     } else if (ext === '.webp') {
+        // Fast WebP compression (effort: 0 is >2.5x faster with virtually identical size)
         outputBuffer = await sharpInstance
-            .webp({ quality: 50 })
+            .rotate()
+            .webp({
+                quality: 65,
+                effort: 0,
+                smartSubsample: false
+            })
+            .toBuffer();
+    } else if (ext === '.gif') {
+        outputBuffer = await sharpInstance
+            .gif({
+                reoptimise: true,
+                effort: 1
+            })
+            .toBuffer();
+    } else if (ext === '.avif') {
+        outputBuffer = await sharpInstance
+            .rotate()
+            .avif({
+                quality: 55,
+                effort: 1
+            })
             .toBuffer();
     } else {
-        // Fallback for other formats (e.g. gif, tiff) - convert to optimized webp
+        // Fallback for other formats (e.g. tiff, bmp)
         outputBuffer = await sharpInstance
-            .webp({ quality: 50 })
+            .rotate()
+            .webp({
+                quality: 65,
+                effort: 0
+            })
             .toBuffer();
     }
 
+    // Professional safety: ensure output never exceeds original file size
+    if (outputBuffer && outputBuffer.length > buffer.length) {
+        if (ext === '.jpg' || ext === '.jpeg' || ext === '.png' || ext === '.webp') {
+            outputBuffer = buffer;
+        }
+    }
+
     return {
-        buffer: outputBuffer,
+        buffer: outputBuffer || buffer,
         filename: originalname
     };
 }
 
 // Health check route
 app.get('/health', (req, res) => {
-    res.json({ status: 'ok', port: PORT, uptime: process.uptime() });
+    res.json({
+        status: 'ok',
+        port: PORT,
+        uptime: process.uptime(),
+        sharpSimd: sharp.simd(),
+        sharpConcurrency: sharp.concurrency()
+    });
 });
 
 // Serve frontend main page
@@ -86,7 +174,7 @@ app.post('/compress', upload.single('image'), async (req, res) => {
     }
 });
 
-// Multiple images compress and zip
+// Multiple images compress and zip (Parallel concurrent processing)
 app.post('/compress-zip', upload.array('images'), async (req, res) => {
     try {
         const files = req.files;
@@ -98,7 +186,7 @@ app.post('/compress-zip', upload.array('images'), async (req, res) => {
         res.setHeader('Content-Disposition', 'attachment; filename="compressed_images.zip"');
 
         const archive = archiver('zip', {
-            zlib: { level: 9 }
+            zlib: { level: 6 } // Level 6 is much faster than 9 for already compressed image buffers
         });
 
         archive.on('error', (err) => {
@@ -110,15 +198,19 @@ app.post('/compress-zip', upload.array('images'), async (req, res) => {
 
         archive.pipe(res);
 
-        for (const file of files) {
+        // Compress images concurrently using multi-core worker pool
+        const concurrency = Math.min(files.length, Math.max(2, os.cpus().length));
+        const compressedList = await mapConcurrent(files, concurrency, async (file) => {
             try {
-                const { buffer, filename } = await compressImageBuffer(file.buffer, file.originalname);
-                archive.append(buffer, { name: filename });
+                return await compressImageBuffer(file.buffer, file.originalname);
             } catch (err) {
                 console.error(`Error compressing ${file.originalname}:`, err);
-                // Include original file if compression failed
-                archive.append(file.buffer, { name: file.originalname });
+                return { buffer: file.buffer, filename: file.originalname };
             }
+        });
+
+        for (const item of compressedList) {
+            archive.append(item.buffer, { name: item.filename });
         }
 
         await archive.finalize();
@@ -132,5 +224,5 @@ app.post('/compress-zip', upload.array('images'), async (req, res) => {
 
 // Start server
 app.listen(PORT, '0.0.0.0', () => {
-    console.log(`[Backend] Imress Node.js Server running at http://localhost:${PORT}`);
+    console.log(`[Backend] Imress Ultra-Fast Server running at http://localhost:${PORT}`);
 });

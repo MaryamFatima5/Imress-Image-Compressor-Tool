@@ -155,6 +155,45 @@
                     </div>
                 </div>
 
+                <!-- 5. Completion "Download All" State inside Dropzone -->
+                <div class="completion-state" id="completionState" style="display: none;">
+                    <div class="completion-card-inner">
+                        <!-- Top Celebration Status -->
+                        <div class="completion-header">
+                            <div class="completion-badge-pill">
+                                <span class="pulse-dot"></span>
+                                <span>Optimization Finished</span>
+                            </div>
+                            <h3 class="completion-title">All Images Successfully Compressed!</h3>
+                            <p class="completion-subtitle">
+                                <span id="completionFilesCount">0</span> image(s) processed and ready for download
+                            </p>
+                        </div>
+
+                        <!-- Hidden metric elements (kept for JS compatibility) -->
+                        <span id="completionSavedText" style="display:none">0 KB</span>
+                        <span id="completionPercentBadge" style="display:none">0% SAVED</span>
+                        <span id="completionTotalImages" style="display:none">0 Files</span>
+                        <span id="completionFinalSize" style="display:none">0 KB</span>
+
+                        <!-- Action Buttons -->
+                        <div class="completion-actions">
+                            <button type="button" class="btn-completion-zip" id="completionDownloadZipBtn">
+                                <svg class="btn-completion-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                    <polyline points="7 10 12 15 17 10"></polyline>
+                                    <line x1="12" y1="15" x2="12" y2="3"></line>
+                                </svg>
+                                <span id="completionZipBtnText">Save as Zip</span>
+                            </button>
+
+                            <!-- Hidden buttons for JS compatibility -->
+                            <button type="button" id="completionUploadMoreBtn" style="display:none"></button>
+                            <button type="button" id="completionClearBtn" style="display:none"></button>
+                        </div>
+                    </div>
+                </div>
+
             </div>
 
             <!-- Compress CTA Action Bar -->

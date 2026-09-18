@@ -30,6 +30,18 @@ const compressCircularPercent = document.getElementById('compressCircularPercent
 const compressingTitle = document.getElementById('compressingTitle');
 const compressingStatusText = document.getElementById('compressingStatusText');
 
+// DOM Elements - Completion "Download All" State inside Dropzone
+const completionState = document.getElementById('completionState');
+const completionFilesCount = document.getElementById('completionFilesCount');
+const completionSavedText = document.getElementById('completionSavedText');
+const completionPercentBadge = document.getElementById('completionPercentBadge');
+const completionTotalImages = document.getElementById('completionTotalImages');
+const completionFinalSize = document.getElementById('completionFinalSize');
+const completionDownloadZipBtn = document.getElementById('completionDownloadZipBtn');
+const completionZipBtnText = document.getElementById('completionZipBtnText');
+const completionUploadMoreBtn = document.getElementById('completionUploadMoreBtn');
+const completionClearBtn = document.getElementById('completionClearBtn');
+
 // DOM Elements - Compress CTA
 const compressActionBar = document.getElementById('compressActionBar');
 const startCompressBtn = document.getElementById('startCompressBtn');
@@ -141,6 +153,7 @@ function showScanningState(fileCount) {
     uploadEmptyState.style.display = 'none';
     stagedContainer.style.display = 'none';
     if (compressingState) compressingState.style.display = 'none';
+    if (completionState) completionState.style.display = 'none';
     scanningState.style.display = 'flex';
     scanStatusText.textContent = `Scanning image 0 of ${fileCount}...`;
 
@@ -152,6 +165,7 @@ function showScanningState(fileCount) {
         circularPercent.textContent = '0%';
     }
 
+    uploadBox.classList.remove('has-completed');
     uploadBox.classList.add('has-staged');
 }
 
@@ -174,7 +188,8 @@ function renderStagedState() {
         if (!isCompressing) {
             uploadEmptyState.style.display = 'flex';
             if (compressingState) compressingState.style.display = 'none';
-            uploadBox.classList.remove('has-staged');
+            if (completionState) completionState.style.display = 'none';
+            uploadBox.classList.remove('has-staged', 'has-completed');
         }
         stagedContainer.style.display = 'none';
         compressActionBar.style.display = 'none';
@@ -184,8 +199,10 @@ function renderStagedState() {
 
     uploadEmptyState.style.display = 'none';
     if (compressingState) compressingState.style.display = 'none';
+    if (completionState) completionState.style.display = 'none';
     stagedContainer.style.display = 'flex';
     compressActionBar.style.display = 'flex';
+    uploadBox.classList.remove('has-completed');
     uploadBox.classList.add('has-staged');
 
     // Update staged toolbar
@@ -312,8 +329,8 @@ function clearStagedQueue() {
 uploadBox.addEventListener('click', (e) => {
     if (isScanning || isCompressing) return;
 
-    // Do not trigger file picker if clicked on cards, buttons, or active compression state
-    if (e.target.closest('.staged-container') || e.target.closest('.compress-action-bar') || e.target.closest('.compressing-state')) {
+    // Do not trigger file picker if clicked on cards, buttons, active compression or completion state
+    if (e.target.closest('.staged-container') || e.target.closest('.compress-action-bar') || e.target.closest('.compressing-state') || e.target.closest('.completion-state')) {
         return;
     }
     fileInput.click();
@@ -515,6 +532,8 @@ async function startCompression() {
     stagedContainer.style.display = 'none';
     compressActionBar.style.display = 'none';
     uploadEmptyState.style.display = 'none';
+    if (completionState) completionState.style.display = 'none';
+    uploadBox.classList.remove('has-completed');
     if (compressingState) compressingState.style.display = 'flex';
 
     // Reset circular bar ring (circumference 264)
@@ -525,7 +544,7 @@ async function startCompression() {
     }
     if (compressCircularPercent) compressCircularPercent.textContent = '0%';
     if (compressingTitle) compressingTitle.textContent = 'Compressing Images...';
-    if (compressingStatusText) compressingStatusText.textContent = `Starting optimization for ${totalToCompress} images...`;
+    if (compressingStatusText) compressingStatusText.textContent = `Optimizing ${totalToCompress} images concurrently...`;
 
     // Convert staged files into fileResults records
     const newItems = stagedFiles.map(item => ({
@@ -534,6 +553,8 @@ async function startCompression() {
         originalSize: item.size,
         compressedSize: 0,
         blobUrl: null,
+        compressedBlob: null,
+        outputName: item.name,
         previewUrl: item.thumbnailUrl,
         status: 'pending'
     }));
@@ -556,73 +577,97 @@ async function startCompression() {
     scrollToCompressionSection();
 
     // Brief pause so the user smoothly glides down into the view before processing starts
-    await new Promise(r => setTimeout(r, 400));
+    await new Promise(r => setTimeout(r, 350));
 
-    // Sequentially compress files
-    for (let i = startIndex; i < fileResults.length; i++) {
-        const item = fileResults[i];
-        const currentNum = i - startIndex + 1;
+    // Parallel Concurrent Compression Engine (up to 4 concurrent workers)
+    let completedCount = 0;
+    let nextIndex = startIndex;
+    const maxIndex = fileResults.length;
 
-        item.status = 'compressing';
+    async function compressionWorker() {
+        while (nextIndex < maxIndex) {
+            const i = nextIndex++;
+            const item = fileResults[i];
+            item.status = 'compressing';
 
-        // Update circular bar progress in drop zone (real-time stream feel)
-        const inProgressPct = Math.round(((currentNum - 0.5) / totalToCompress) * 100);
-        if (compressCircularBar) {
-            const offset = CIRCLE_CIRCUMFERENCE - (CIRCLE_CIRCUMFERENCE * (inProgressPct / 100));
-            compressCircularBar.style.strokeDashoffset = offset;
+            updateTableRow(i);
+            followCompressingRow(i);
+
+            if (compressingStatusText) {
+                compressingStatusText.textContent = `Compressing ${item.name}...`;
+            }
+
+            try {
+                const { blob, outputFilename } = await compressOne(item.file);
+                item.compressedBlob = blob;
+                item.compressedSize = blob.size;
+                item.blobUrl = URL.createObjectURL(blob);
+                item.outputName = outputFilename || item.name;
+                item.status = 'complete';
+            } catch (err) {
+                console.error('Compression error for', item.name, err);
+                item.status = 'error';
+            }
+
+            completedCount++;
+            const completedPct = Math.round((completedCount / totalToCompress) * 100);
+            if (compressCircularBar) {
+                const offset = CIRCLE_CIRCUMFERENCE - (CIRCLE_CIRCUMFERENCE * (completedPct / 100));
+                compressCircularBar.style.strokeDashoffset = offset;
+            }
+            if (compressCircularPercent) {
+                compressCircularPercent.textContent = `${completedPct}%`;
+            }
+            if (compressingStatusText) {
+                compressingStatusText.textContent = `Optimized ${completedCount} of ${totalToCompress} images...`;
+            }
+
+            updateTableRow(i);
+            updateSummary();
         }
-        if (compressCircularPercent) compressCircularPercent.textContent = `${inProgressPct}%`;
-        if (compressingStatusText) compressingStatusText.textContent = `Compressing ${currentNum} of ${totalToCompress}: ${item.name}`;
-
-        // Update single row in-place (flicker-free)
-        updateTableRow(i);
-
-        // 2. Slow, graceful auto-scroll following the active compressing row down (stops permanently if user manually scrolled)
-        followCompressingRow(i);
-
-        try {
-            const compressedBlob = await compressOne(item.file);
-            item.compressedSize = compressedBlob.size;
-            item.blobUrl = URL.createObjectURL(compressedBlob);
-            item.status = 'complete';
-        } catch (err) {
-            console.error('Compression error for', item.name, err);
-            item.status = 'error';
-        }
-
-        // Complete step for this image
-        const completedPct = Math.round((currentNum / totalToCompress) * 100);
-        if (compressCircularBar) {
-            const offset = CIRCLE_CIRCUMFERENCE - (CIRCLE_CIRCUMFERENCE * (completedPct / 100));
-            compressCircularBar.style.strokeDashoffset = offset;
-        }
-        if (compressCircularPercent) compressCircularPercent.textContent = `${completedPct}%`;
-
-        updateTableRow(i);
-        updateSummary();
     }
+
+    const CONCURRENCY = Math.min(4, totalToCompress);
+    const workerPromises = [];
+    for (let w = 0; w < CONCURRENCY; w++) {
+        workerPromises.push(compressionWorker());
+    }
+    await Promise.all(workerPromises);
 
     // Finished compression
     isCompressing = false;
     startCompressBtn.disabled = false;
     
-    if (compressCircularBar) compressCircularBar.style.strokeDashoffset = 0;
-    if (compressCircularPercent) compressCircularPercent.textContent = '100%';
-    if (compressingTitle) compressingTitle.textContent = '✓ Optimization Complete!';
-    if (compressingStatusText) compressingStatusText.textContent = `All ${totalToCompress} images optimized successfully!`;
+    // 1. Loading bar gets disappeared
+    if (compressingState) compressingState.style.display = 'none';
 
-    if (summaryTitle) {
-        summaryTitle.textContent = 'Optimization Complete!';
-    }
+    // 2. Compute final statistics for completion window
+    const completed = fileResults.filter(f => f.status === 'complete');
+    const totalOrig = fileResults.reduce((sum, f) => sum + f.originalSize, 0);
+    const totalComp = completed.reduce((sum, f) => sum + f.compressedSize, 0);
+    const completedOrig = completed.reduce((sum, f) => sum + f.originalSize, 0);
+    const totalGain = Math.max(0, completedOrig - totalComp);
+    const overallPercent = completedOrig > 0 ? ((totalGain / completedOrig) * 100).toFixed(0) : 0;
 
-    // Smoothly ensure footer summary bar is visible if user is at the bottom of the table
-    const footerBar = document.querySelector('.table-footer-bar');
-    if (footerBar) {
-        const footerRect = footerBar.getBoundingClientRect();
-        if (footerRect.bottom > window.innerHeight) {
-            smoothScrollTo(window.scrollY + footerRect.bottom - window.innerHeight + 24, 700);
-        }
-    }
+    if (completionFilesCount) completionFilesCount.textContent = completed.length;
+    if (completionSavedText) completionSavedText.textContent = formatSize(totalGain);
+    if (completionPercentBadge) completionPercentBadge.textContent = `${overallPercent}% SAVED`;
+    if (completionTotalImages) completionTotalImages.textContent = `${completed.length} Files`;
+    if (completionFinalSize) completionFinalSize.textContent = `${formatSize(totalComp)} (orig ${formatSize(totalOrig)})`;
+
+    // 3. Reveal the Download All window inside the drop zone matching the UI theme
+    if (completionState) completionState.style.display = 'flex';
+    uploadBox.classList.add('has-completed');
+    uploadBox.classList.remove('has-staged');
+
+    // Hide the lower redundant summaryBanner so the drop zone remains the clean hero download panel
+    if (summaryBanner) summaryBanner.style.display = 'none';
+
+    // 4. Auto scroll UI smoothly to the very top so the user sees the download window immediately
+    userInteractedWithScroll = false;
+    setTimeout(() => {
+        smoothScrollTo(0, 800, true);
+    }, 100);
 
     // Clear staged files queue
     stagedFiles = [];
@@ -641,7 +686,17 @@ async function compressOne(file) {
         throw new Error(`Server error (${response.status}): ${response.statusText}`);
     }
 
-    return await response.blob();
+    let outputFilename = file.name;
+    const disposition = response.headers.get('Content-Disposition');
+    if (disposition) {
+        const match = disposition.match(/filename\*?=(?:UTF-8'')?["']?([^"';]+)["']?/i);
+        if (match && match[1]) {
+            outputFilename = decodeURIComponent(match[1]);
+        }
+    }
+
+    const blob = await response.blob();
+    return { blob, outputFilename };
 }
 
 // ==========================================================================
@@ -789,11 +844,21 @@ function updateSummary() {
 
 async function downloadSingleFile(index) {
     const item = fileResults[index];
-    if (!item || !item.blobUrl) return;
+    if (!item) return;
 
-    const response = await fetch(item.blobUrl);
-    const blob = await response.blob();
-    await saveFile(item.name, blob);
+    let blob = item.compressedBlob;
+    if (!blob && item.blobUrl) {
+        try {
+            const response = await fetch(item.blobUrl);
+            blob = await response.blob();
+        } catch (e) {
+            console.error('Failed to fetch blob URL:', e);
+        }
+    }
+    if (!blob) return;
+
+    const downloadName = item.outputName || item.name;
+    await saveFile(downloadName, blob);
 }
 
 function blobToBase64(blob) {
@@ -806,21 +871,29 @@ function blobToBase64(blob) {
 }
 
 async function saveFile(filename, blob) {
-    // 1. Electron Desktop API
+    // 1. Electron Desktop API - Fast binary transfer
     if (window.electronAPI && typeof window.electronAPI.saveFile === 'function') {
         try {
-            const base64data = await blobToBase64(blob);
-            const res = await window.electronAPI.saveFile(filename, base64data);
+            const arrayBuffer = await blob.arrayBuffer();
+            const uint8 = new Uint8Array(arrayBuffer);
+            const res = await window.electronAPI.saveFile(filename, uint8);
             if (res && res.success) {
                 console.log('Saved successfully via Electron to:', res.filePath);
                 return;
             }
             if (res && res.cancelled) {
-                console.log('User cancelled save');
+                console.log('User cancelled save dialog');
                 return;
             }
         } catch (err) {
-            console.warn('Electron save dialog failed, falling back to browser download:', err);
+            console.warn('Fast Electron binary save failed, trying base64 fallback:', err);
+            try {
+                const base64data = await blobToBase64(blob);
+                const res = await window.electronAPI.saveFile(filename, base64data);
+                if (res && (res.success || res.cancelled)) return;
+            } catch (b64Err) {
+                console.warn('Base64 save failed, falling back to browser download:', b64Err);
+            }
         }
     }
 
@@ -832,24 +905,65 @@ async function saveFile(filename, blob) {
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
-// Batch ZIP download button
-downloadZipBtn.addEventListener('click', async () => {
+// Shared Batch ZIP download function - Instant client-side bundling
+async function downloadAllAsZip(btnElement, textElement) {
     const completedFiles = fileResults.filter(f => f.status === 'complete');
     if (completedFiles.length === 0) return;
 
-    const origText = zipBtnText.textContent;
-    zipBtnText.textContent = 'Generating ZIP Archive...';
-    downloadZipBtn.disabled = true;
-
-    const formData = new FormData();
-    completedFiles.forEach(item => {
-        formData.append('images', item.file);
-    });
+    const origText = textElement ? textElement.textContent : 'Save as Zip';
+    if (textElement) textElement.textContent = 'Preparing ZIP...';
+    if (btnElement) btnElement.disabled = true;
 
     try {
+        if (typeof JSZip !== 'undefined') {
+            // Instant Client-Side Packaging from already compressed memory blobs
+            const zip = new JSZip();
+            const usedNames = new Set();
+
+            for (const item of completedFiles) {
+                let filename = item.outputName || item.name;
+                let finalName = filename;
+                let counter = 1;
+                while (usedNames.has(finalName.toLowerCase())) {
+                    const dotIdx = filename.lastIndexOf('.');
+                    if (dotIdx !== -1) {
+                        finalName = `${filename.slice(0, dotIdx)}_${counter}${filename.slice(dotIdx)}`;
+                    } else {
+                        finalName = `${filename}_${counter}`;
+                    }
+                    counter++;
+                }
+                usedNames.add(finalName.toLowerCase());
+
+                let blob = item.compressedBlob;
+                if (!blob && item.blobUrl) {
+                    const res = await fetch(item.blobUrl);
+                    blob = await res.blob();
+                }
+                if (blob) {
+                    zip.file(finalName, blob);
+                }
+            }
+
+            // Generate ZIP instantly using STORE (images are already compressed, zero latency!)
+            const zipBlob = await zip.generateAsync({
+                type: 'blob',
+                compression: 'STORE'
+            });
+
+            await saveFile('compressed_images.zip', zipBlob);
+            return;
+        }
+
+        // Fallback to server /compress-zip if JSZip library is not present
+        const formData = new FormData();
+        completedFiles.forEach(item => {
+            formData.append('images', item.file);
+        });
+
         const response = await fetch(`${API_BASE}/compress-zip`, {
             method: 'POST',
             body: formData
@@ -859,35 +973,65 @@ downloadZipBtn.addEventListener('click', async () => {
             throw new Error(`Server returned ${response.status}: ${response.statusText}`);
         }
 
-        const blob = await response.blob();
-        await saveFile('compressed_images.zip', blob);
+        const fallbackBlob = await response.blob();
+        await saveFile('compressed_images.zip', fallbackBlob);
 
     } catch (err) {
-        alert('Failed to generate ZIP: ' + err.message + '\nMake sure the backend server is running.');
+        console.error('Failed to generate ZIP archive:', err);
+        alert('Failed to generate ZIP archive: ' + err.message);
     } finally {
-        zipBtnText.textContent = origText;
-        downloadZipBtn.disabled = false;
+        if (textElement) textElement.textContent = origText;
+        if (btnElement) btnElement.disabled = false;
     }
-});
+}
 
-// Clear All functionality
+// Batch ZIP download listeners (both completion window & table banner)
+if (downloadZipBtn) {
+    downloadZipBtn.addEventListener('click', () => downloadAllAsZip(downloadZipBtn, zipBtnText));
+}
+
+if (completionDownloadZipBtn) {
+    completionDownloadZipBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        downloadAllAsZip(completionDownloadZipBtn, completionZipBtnText);
+    });
+}
+
+if (completionUploadMoreBtn) {
+    completionUploadMoreBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        fileInput.click();
+    });
+}
+
+// Reset/Clear All functionality
+function resetAllState() {
+    // Clean up created object URLs
+    fileResults.forEach(item => {
+        if (item.previewUrl) window.imressThumbnailer.revoke(item.previewUrl);
+        if (item.blobUrl) URL.revokeObjectURL(item.blobUrl);
+    });
+    clearStagedQueue();
+    fileResults = [];
+    tableBody.innerHTML = '';
+    tableWrapper.style.display = 'none';
+    summaryBanner.style.display = 'none';
+    if (compressingState) compressingState.style.display = 'none';
+    if (completionState) completionState.style.display = 'none';
+    uploadBox.classList.remove('has-staged', 'has-completed');
+    uploadEmptyState.style.display = 'flex';
+    // Smoothly scroll back to top
+    smoothScrollTo(0, 500, true);
+}
+
 if (clearAllBtn) {
-    clearAllBtn.addEventListener('click', () => {
-        // Clean up created object URLs
-        fileResults.forEach(item => {
-            if (item.previewUrl) window.imressThumbnailer.revoke(item.previewUrl);
-            if (item.blobUrl) URL.revokeObjectURL(item.blobUrl);
-        });
-        clearStagedQueue();
-        fileResults = [];
-        tableBody.innerHTML = '';
-        tableWrapper.style.display = 'none';
-        summaryBanner.style.display = 'none';
-        if (compressingState) compressingState.style.display = 'none';
-        uploadEmptyState.style.display = 'flex';
-        uploadBox.classList.remove('has-staged');
-        // Smoothly scroll back to top
-        smoothScrollTo(0, 500, true);
+    clearAllBtn.addEventListener('click', resetAllState);
+}
+
+if (completionClearBtn) {
+    completionClearBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        resetAllState();
     });
 }
 
