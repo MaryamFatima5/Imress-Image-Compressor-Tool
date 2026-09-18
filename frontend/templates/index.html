@@ -37,22 +37,113 @@
             <div class="upload-dropzone" id="uploadBox">
                 <input type="file" id="fileInput" accept="image/jpeg,image/png,image/webp" multiple hidden>
                 
-                <div class="upload-icon-wrapper">
-                    <svg class="upload-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-                        <polyline points="17 8 12 3 7 8"/>
-                        <line x1="12" y1="3" x2="12" y2="15"/>
-                    </svg>
+                <!-- 1. Default Empty State -->
+                <div class="upload-empty-state" id="uploadEmptyState">
+                    <div class="upload-icon-wrapper">
+                        <svg class="upload-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                            <polyline points="17 8 12 3 7 8"/>
+                            <line x1="12" y1="3" x2="12" y2="15"/>
+                        </svg>
+                    </div>
+
+                    <h3 class="upload-title" id="uploadText">Drag & Drop images here, or <span class="upload-highlight">Browse Files</span></h3>
+                    <p class="upload-meta">Supports multiple JPG, PNG, WEBP files simultaneously</p>
+                    
+                    <div class="format-badges">
+                        <span class="format-tag">.JPG</span>
+                        <span class="format-tag">.JPEG</span>
+                        <span class="format-tag">.PNG</span>
+                        <span class="format-tag">.WEBP</span>
+                    </div>
                 </div>
 
-                <h3 class="upload-title" id="uploadText">Drag & Drop images here, or <span class="upload-highlight">Browse Files</span></h3>
-                <p class="upload-meta">Supports multiple files simultaneously</p>
-                
-                <div class="format-badges">
-                    <span class="format-tag">.JPG</span>
-                    <span class="format-tag">.JPEG</span>
-                    <span class="format-tag">.PNG</span>
-                    <span class="format-tag">.WEBP</span>
+                <!-- 2. Circular Bar Animation State (shown while loading previews) -->
+                <div class="scanning-state" id="scanningState" style="display: none;">
+                    <div class="circular-progress-wrap">
+                        <svg class="circular-progress-svg" viewBox="0 0 100 100">
+                            <defs>
+                                <linearGradient id="circlePinkGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                                    <stop offset="0%" stop-color="#FF338F" />
+                                    <stop offset="100%" stop-color="#E6177D" />
+                                </linearGradient>
+                            </defs>
+                            <!-- Background Track -->
+                            <circle class="circle-track" cx="50" cy="50" r="42" />
+                            <!-- Animated Progress Ring -->
+                            <circle class="circle-bar" id="circularBarCircle" cx="50" cy="50" r="42" />
+                        </svg>
+                        <div class="circular-progress-content">
+                            <span class="circular-percent" id="circularPercent">0%</span>
+                            <span class="circular-label">LOADING</span>
+                        </div>
+                    </div>
+                    <div class="scanning-info">
+                        <h4 class="scanning-title">Scanning Image Previews</h4>
+                        <p class="scanning-status">
+                            <span class="pulse-dot-pink"></span>
+                            <span id="scanStatusText">Scanning images offline...</span>
+                        </p>
+                    </div>
+                </div>
+
+                <!-- 3. Staged Files State (shown when images are queued) -->
+                <div class="staged-container" id="stagedContainer" style="display: none;">
+                    <!-- Staging Header / Toolbar -->
+                    <div class="staged-toolbar" id="stagedToolbar">
+                        <div class="staged-toolbar-left">
+                            <span class="staged-pill-badge">
+                                <span class="badge-dot"></span>
+                                <span id="stagedCountBadge">0 Images</span>
+                            </span>
+                            <span class="staged-size-text" id="stagedTotalSizeText">Total: 0 KB</span>
+                        </div>
+                        <div class="staged-toolbar-actions">
+                            <button type="button" class="btn-staged-action btn-add-more" id="addMoreFilesBtn" style="display: none;">
+                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                                    <line x1="12" y1="5" x2="12" y2="19"></line>
+                                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                                </svg>
+                                <span>Add More</span>
+                            </button>
+                            <button type="button" class="btn-staged-action btn-clear-staged" id="clearStagedBtn">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <polyline points="3 6 5 6 21 6"></polyline>
+                                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                                </svg>
+                                <span>Clear Queue</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Scrollable Staged Thumbnails Grid -->
+                    <div class="staged-grid-scroll" id="stagedGridScroll">
+                        <div class="staged-grid" id="stagedGrid">
+                            <!-- Injected dynamically -->
+                        </div>
+                    </div>
+
+                    <!-- Drop more hint inside staged view -->
+                    <div class="staged-drop-hint">
+                        <span>💡 Drag & drop additional files here anytime</span>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Compress CTA Action Bar -->
+            <div class="compress-action-bar" id="compressActionBar" style="display: none;">
+                <button type="button" class="btn-compress-main" id="startCompressBtn">
+                    <svg class="btn-compress-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                        <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+                    </svg>
+                    <span id="compressBtnText">Compress All (0 Images)</span>
+                </button>
+                <div class="compress-progress-indicator" id="compressProgressIndicator" style="display: none;">
+                    <div class="compress-progress-track">
+                        <div class="compress-progress-fill" id="compressProgressFill" style="width: 0%;"></div>
+                    </div>
+                    <span class="compress-progress-status" id="compressProgressStatus">Compressing 0 of 0...</span>
                 </div>
             </div>
 
@@ -154,7 +245,8 @@
 
     </div>
 
-    <!-- Backend configuration & Logic -->
+    <!-- Offline Thumbnail Engine & Application Logic -->
+    <script src="{{ url_for('static', filename='thumbnailer.js') }}"></script>
     <script src="{{ url_for('static', filename='script.js') }}"></script>
 </body>
 </html>

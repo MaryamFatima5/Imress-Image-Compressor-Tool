@@ -38,6 +38,39 @@
     --transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
+/* ==========================================================================
+   Global UI Scrollbar - Professional Luxury Pink Theme
+   ========================================================================== */
+
+html {
+    scrollbar-color: rgba(230, 23, 125, 0.45) #FAF9FB;
+    scrollbar-width: thin;
+}
+
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: #FAF9FB;
+}
+
+::-webkit-scrollbar-thumb {
+    background: rgba(230, 23, 125, 0.35);
+    border-radius: 9999px;
+    border: 2px solid #FAF9FB;
+    transition: var(--transition);
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: var(--primary);
+}
+
+::-webkit-scrollbar-thumb:active {
+    background: var(--primary-dark);
+}
+
 *, *::before, *::after {
     margin: 0;
     padding: 0;
@@ -172,11 +205,15 @@ body {
    Upload Dropzone
    ========================================================================== */
 
+/* ==========================================================================
+   Upload Dropzone & Staging
+   ========================================================================== */
+
 .upload-dropzone {
     border: 2.5px dashed var(--primary);
     background: #FFFAFC;
     border-radius: var(--radius-md);
-    padding: 44px 20px;
+    padding: 36px 24px;
     text-align: center;
     cursor: pointer;
     transition: var(--transition);
@@ -195,6 +232,7 @@ body {
     background: radial-gradient(circle at center, rgba(255, 46, 147, 0.05) 0%, transparent 70%);
     opacity: 0;
     transition: opacity 0.3s ease;
+    pointer-events: none;
 }
 
 .upload-dropzone:hover {
@@ -209,10 +247,33 @@ body {
 }
 
 .upload-dropzone.dragover {
-    background: #FFE2EE;
-    border-color: var(--primary-dark);
-    transform: scale(1.01);
-    box-shadow: 0 12px 30px -4px rgba(230, 23, 125, 0.25);
+    background: #FFE2EE !important;
+    border-color: var(--primary-dark) !important;
+    transform: scale(1.01) !important;
+    box-shadow: 0 12px 30px -4px rgba(230, 23, 125, 0.25) !important;
+}
+
+.upload-dropzone.has-staged {
+    padding: 20px;
+    cursor: default;
+    background: #FFFDFE;
+    border-style: solid;
+    border-width: 1.5px;
+    border-color: rgba(230, 23, 125, 0.35);
+}
+
+.upload-dropzone.has-staged:hover {
+    transform: none;
+    box-shadow: var(--shadow-md);
+}
+
+/* Empty State */
+.upload-empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
 }
 
 .upload-icon-wrapper {
@@ -277,6 +338,505 @@ body {
     border-radius: var(--radius-sm);
     border: 1px solid rgba(230, 23, 125, 0.2);
     box-shadow: var(--shadow-sm);
+}
+
+/* ==========================================================================
+   Professional Circle Scanning Radar Animation
+   ========================================================================== */
+
+.scanning-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 30px 20px;
+    gap: 20px;
+    width: 100%;
+    animation: fadeIn 0.3s ease;
+}
+
+.circular-progress-wrap {
+    position: relative;
+    width: 104px;
+    height: 104px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    filter: drop-shadow(0 4px 14px rgba(230, 23, 125, 0.25));
+}
+
+.circular-progress-svg {
+    width: 100%;
+    height: 100%;
+    transform: rotate(-90deg);
+}
+
+.circle-track {
+    fill: none;
+    stroke: rgba(230, 23, 125, 0.12);
+    stroke-width: 7;
+}
+
+.circle-bar {
+    fill: none;
+    stroke: url(#circlePinkGrad);
+    stroke-width: 7;
+    stroke-linecap: round;
+    stroke-dasharray: 264;
+    stroke-dashoffset: 264;
+    transition: stroke-dashoffset 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.circular-progress-content {
+    position: absolute;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.circular-percent {
+    font-size: 17px;
+    font-weight: 800;
+    color: var(--primary);
+    line-height: 1.1;
+}
+
+.circular-label {
+    font-size: 8.5px;
+    font-weight: 700;
+    letter-spacing: 0.8px;
+    color: var(--text-muted);
+}
+
+.scanning-info {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+}
+
+.scanning-title {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--text-main);
+    letter-spacing: -0.2px;
+}
+
+.scanning-status {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13.5px;
+    color: var(--text-secondary);
+}
+
+.pulse-dot-pink {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--primary);
+    animation: pulse 1.6s infinite;
+}
+
+/* ==========================================================================
+   Staged Container & Scrollable Preview Grid
+   ========================================================================== */
+
+.staged-container {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    animation: fadeIn 0.25s ease-out;
+}
+
+.staged-toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 4px 6px;
+    border-bottom: 1px solid rgba(230, 23, 125, 0.12);
+    padding-bottom: 10px;
+}
+
+.staged-toolbar-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.staged-pill-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    background: var(--primary-soft);
+    color: var(--primary);
+    padding: 5px 12px;
+    border-radius: var(--radius-full);
+    font-size: 13px;
+    font-weight: 700;
+    border: 1px solid var(--primary-border);
+}
+
+.badge-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background-color: var(--primary);
+}
+
+.staged-size-text {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-muted);
+}
+
+.staged-toolbar-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.btn-staged-action {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 7px 14px;
+    border-radius: var(--radius-sm);
+    font-size: 12.5px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: var(--transition);
+    border: 1px solid transparent;
+}
+
+.btn-add-more {
+    background: #FFFFFF;
+    color: var(--primary);
+    border: 1px solid var(--primary-border);
+}
+
+.btn-add-more:hover {
+    background: var(--primary-soft);
+    border-color: var(--primary);
+    transform: translateY(-1px);
+}
+
+.btn-clear-staged {
+    background: #FFF5F5;
+    color: #E53E3E;
+    border: 1px solid rgba(229, 62, 62, 0.2);
+}
+
+.btn-clear-staged:hover {
+    background: #FED7D7;
+    color: #C53030;
+    transform: translateY(-1px);
+}
+
+/* Scrollable Container with Guaranteed Zero-Lag Performance */
+.staged-grid-scroll {
+    max-height: 310px;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: 6px 4px 8px 4px;
+    scroll-behavior: smooth;
+    /* Allow natural scroll transfer to outer UI when reaching bottom */
+    overscroll-behavior: auto;
+    overscroll-behavior-y: auto;
+    /* CSS Rendering optimizations for large image sets */
+    contain: layout paint;
+}
+
+/* Luxury Pink Custom Scrollbar */
+.staged-grid-scroll::-webkit-scrollbar {
+    width: 7px;
+}
+
+.staged-grid-scroll::-webkit-scrollbar-track {
+    background: rgba(230, 23, 125, 0.05);
+    border-radius: 8px;
+}
+
+.staged-grid-scroll::-webkit-scrollbar-thumb {
+    background: rgba(230, 23, 125, 0.32);
+    border-radius: 8px;
+    transition: background 0.2s ease;
+}
+
+.staged-grid-scroll::-webkit-scrollbar-thumb:hover {
+    background: var(--primary);
+}
+
+/* Thumbnails Responsive Grid */
+.staged-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+    gap: 12px;
+}
+
+/* Individual Preview Card - Whole Frame with Static Pink Border */
+.staged-card {
+    position: relative;
+    background: #FFFFFF;
+    border: 1.5px solid rgba(230, 23, 125, 0.42); /* professional static pink border */
+    border-radius: var(--radius-sm);
+    padding: 8px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    box-shadow: 0 2px 8px rgba(230, 23, 125, 0.07);
+    transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s ease, border-color 0.2s ease;
+    user-select: none;
+    /* Virtual-style offscreen paint optimization */
+    content-visibility: auto;
+    contain-intrinsic-size: 130px 140px;
+}
+
+.staged-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(230, 23, 125, 0.22);
+    border-color: var(--primary);
+}
+
+/* Dotted Thumbnail Frame with Add Option at End of Image List */
+.staged-card-add {
+    border: 2px dashed rgba(230, 23, 125, 0.42) !important;
+    background: #FFFAFC !important;
+    min-height: 140px;
+    cursor: pointer !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    transition: var(--transition) !important;
+    box-shadow: none !important;
+}
+
+.staged-card-add:hover {
+    border-color: var(--primary) !important;
+    background: var(--primary-soft) !important;
+    transform: translateY(-2px) !important;
+    box-shadow: 0 8px 18px rgba(230, 23, 125, 0.18) !important;
+}
+
+.staged-add-inner {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    padding: 6px;
+    pointer-events: none;
+}
+
+.staged-add-icon-circle {
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    background: var(--primary-soft);
+    color: var(--primary);
+    border: 1.5px solid var(--primary-border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: var(--transition);
+}
+
+.staged-card-add:hover .staged-add-icon-circle {
+    background: var(--primary);
+    color: #FFFFFF;
+    transform: scale(1.12);
+    box-shadow: var(--primary-glow);
+    border-color: transparent;
+}
+
+.staged-add-title {
+    font-size: 12.5px;
+    font-weight: 700;
+    color: var(--primary);
+    margin-top: 2px;
+}
+
+.staged-add-sub {
+    font-size: 10.5px;
+    color: var(--text-muted);
+    font-weight: 500;
+}
+
+
+/* Individual Cross / Delete Button with Matching Pink Border */
+.staged-remove-btn {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: #FFFFFF;
+    border: 1.5px solid rgba(230, 23, 125, 0.42); /* static thin matching pink border */
+    color: var(--primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    z-index: 10;
+    transition: var(--transition);
+    box-shadow: 0 1px 4px rgba(230, 23, 125, 0.15);
+}
+
+.staged-remove-btn:hover {
+    background: #EF4444;
+    color: #FFFFFF;
+    border-color: #EF4444;
+    transform: scale(1.15);
+    box-shadow: 0 3px 8px rgba(239, 68, 68, 0.4);
+}
+
+/* Thumbnail Visual - Ultra-HD Quality without inner border */
+.staged-thumb-wrapper {
+    width: 100%;
+    height: 96px;
+    border-radius: 6px;
+    overflow: hidden;
+    background: #F4F5F7;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    box-shadow: none;
+}
+
+.staged-thumb-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
+    image-rendering: -webkit-optimize-contrast;
+    image-rendering: crisp-edges;
+    transition: transform 0.3s ease;
+}
+
+.staged-card:hover .staged-thumb-img {
+    transform: scale(1.06);
+}
+
+/* Staged Meta Info */
+.staged-meta {
+    width: 100%;
+    margin-top: 6px;
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    text-align: center;
+}
+
+.staged-name {
+    font-size: 11.5px;
+    font-weight: 600;
+    color: var(--text-main);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: block;
+    width: 100%;
+}
+
+.staged-size-badge {
+    font-size: 10.5px;
+    font-weight: 600;
+    color: var(--primary);
+}
+
+.staged-drop-hint {
+    text-align: center;
+    font-size: 12px;
+    color: var(--text-muted);
+    padding-top: 4px;
+}
+
+/* ==========================================================================
+   Compress Action Bar
+   ========================================================================== */
+
+.compress-action-bar {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 14px;
+    width: 100%;
+    margin-top: 6px;
+    scroll-margin-bottom: 28px;
+    animation: fadeIn 0.3s ease-out;
+}
+
+.btn-compress-main {
+    background: var(--primary-gradient);
+    color: #FFFFFF;
+    border: none;
+    padding: 15px 38px;
+    border-radius: var(--radius-md);
+    font-size: 15.5px;
+    font-weight: 800;
+    letter-spacing: 0.3px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    box-shadow: var(--primary-glow);
+    transition: var(--transition);
+}
+
+.btn-compress-main:hover {
+    transform: translateY(-2px) scale(1.02);
+    box-shadow: 0 14px 30px -4px rgba(230, 23, 125, 0.45);
+}
+
+.btn-compress-main:active {
+    transform: translateY(0) scale(0.99);
+}
+
+.btn-compress-main:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+.btn-compress-icon {
+    width: 20px;
+    height: 20px;
+}
+
+.compress-progress-indicator {
+    width: 100%;
+    max-width: 380px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+}
+
+.compress-progress-track {
+    width: 100%;
+    height: 8px;
+    background: #F1F3F7;
+    border-radius: var(--radius-full);
+    overflow: hidden;
+}
+
+.compress-progress-fill {
+    height: 100%;
+    background: var(--primary-gradient);
+    border-radius: var(--radius-full);
+    transition: width 0.25s ease;
+}
+
+.compress-progress-status {
+    font-size: 12.5px;
+    font-weight: 600;
+    color: var(--primary);
 }
 
 /* ==========================================================================
