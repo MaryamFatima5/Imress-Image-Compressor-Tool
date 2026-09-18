@@ -387,6 +387,10 @@ body {
     transition: stroke-dashoffset 0.25s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
+#compressCircularBar {
+    stroke: url(#circleCompressGrad);
+}
+
 .circular-progress-content {
     position: absolute;
     display: flex;
@@ -500,11 +504,49 @@ body {
 }
 
 .completion-state {
+    position: relative;
     width: 100%;
     display: flex;
     flex-direction: column;
     align-items: center;
     animation: fadeIn 0.35s ease-out;
+}
+
+.completion-close-btn {
+    position: absolute;
+    top: -8px;
+    right: 0px;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    border: 1px solid rgba(230, 23, 125, 0.18);
+    background: #FFFFFF;
+    color: var(--text-muted);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+    z-index: 10;
+    padding: 0;
+}
+
+.completion-close-btn:hover {
+    background: #FFF0F6;
+    color: var(--primary);
+    border-color: rgba(230, 23, 125, 0.4);
+    transform: scale(1.08);
+    box-shadow: 0 4px 12px rgba(230, 23, 125, 0.18);
+}
+
+.completion-close-btn:active {
+    transform: scale(0.94);
+}
+
+.completion-close-btn svg {
+    display: block;
+    pointer-events: none;
 }
 
 .completion-card-inner {

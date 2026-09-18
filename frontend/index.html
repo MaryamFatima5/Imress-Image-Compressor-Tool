@@ -79,7 +79,6 @@
                         </div>
                     </div>
                     <div class="scanning-info">
-                        <h4 class="scanning-title">Scanning Image Previews</h4>
                         <p class="scanning-status">
                             <span class="pulse-dot-pink"></span>
                             <span id="scanStatusText">Scanning images offline...</span>
@@ -136,34 +135,41 @@
                         <svg class="circular-progress-svg" viewBox="0 0 100 100">
                             <defs>
                                 <linearGradient id="circleCompressGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                                    <stop offset="0%" stop-color="#FF2E93" />
+                                    <stop offset="0%" stop-color="#FF338F" />
                                     <stop offset="100%" stop-color="#E6177D" />
                                 </linearGradient>
                             </defs>
                             <circle class="circle-track" cx="50" cy="50" r="42" />
-                            <circle class="circle-bar" id="compressCircularBar" cx="50" cy="50" r="42" />
+                            <circle class="circle-bar" id="compressCircularBar" cx="50" cy="50" r="42" stroke="url(#circleCompressGrad)" />
                         </svg>
                         <div class="circular-progress-content">
-                            <span class="circular-percent" id="compressCircularPercent" style="font-size: 22px;">0%</span>
+                            <span class="circular-percent" id="compressCircularPercent">0%</span>
+                            <span class="circular-label">COMPRESSING</span>
                         </div>
                     </div>
                     <div class="compressing-info">
                         <h4 class="compressing-title" id="compressingTitle">Compressing Images...</h4>
                         <p class="compressing-status">
                             <span class="pulse-dot-pink"></span>
-                            <span id="compressingStatusText">Starting optimization...</span>
+                            <span id="compressingStatusText">Starting compression...</span>
                         </p>
                     </div>
                 </div>
 
                 <!-- 5. Completion "Download All" State inside Dropzone -->
                 <div class="completion-state" id="completionState" style="display: none;">
+                    <button type="button" class="completion-close-btn" id="completionCloseBtn" title="Close download window" aria-label="Close download window">
+                        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="18" y1="6" x2="6" y2="18"></line>
+                            <line x1="6" y1="6" x2="18" y2="18"></line>
+                        </svg>
+                    </button>
                     <div class="completion-card-inner">
                         <!-- Top Celebration Status -->
                         <div class="completion-header">
                             <div class="completion-badge-pill">
                                 <span class="pulse-dot"></span>
-                                <span>Optimization Finished</span>
+                                <span>Compression Complete</span>
                             </div>
                             <h3 class="completion-title">All Images Successfully Compressed!</h3>
                             <p class="completion-subtitle">
@@ -221,7 +227,7 @@
                         </div>
 
                         <div class="summary-info">
-                            <h2 class="summary-title" id="summaryTitle">Optimization Complete!</h2>
+                            <h2 class="summary-title" id="summaryTitle">Compression Complete!</h2>
                             <p class="summary-detail"><span id="totalFilesText" class="stat-highlight">0</span> image(s) compressed successfully</p>
                             <div class="summary-stats-pills">
                                 <span class="stat-pill">Saved: <strong id="totalSaved">0 KB</strong></span>

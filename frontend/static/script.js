@@ -41,6 +41,7 @@ const completionDownloadZipBtn = document.getElementById('completionDownloadZipB
 const completionZipBtnText = document.getElementById('completionZipBtnText');
 const completionUploadMoreBtn = document.getElementById('completionUploadMoreBtn');
 const completionClearBtn = document.getElementById('completionClearBtn');
+const completionCloseBtn = document.getElementById('completionCloseBtn');
 
 // DOM Elements - Compress CTA
 const compressActionBar = document.getElementById('compressActionBar');
@@ -537,14 +538,12 @@ async function startCompression() {
     if (compressingState) compressingState.style.display = 'flex';
 
     // Reset circular bar ring (circumference 264)
-    const CIRCLE_CIRCUMFERENCE = 264;
     if (compressCircularBar) {
-        compressCircularBar.style.strokeDasharray = CIRCLE_CIRCUMFERENCE;
-        compressCircularBar.style.strokeDashoffset = CIRCLE_CIRCUMFERENCE;
+        compressCircularBar.style.strokeDashoffset = '264';
     }
     if (compressCircularPercent) compressCircularPercent.textContent = '0%';
     if (compressingTitle) compressingTitle.textContent = 'Compressing Images...';
-    if (compressingStatusText) compressingStatusText.textContent = `Optimizing ${totalToCompress} images concurrently...`;
+    if (compressingStatusText) compressingStatusText.textContent = `Compressing ${totalToCompress} images concurrently...`;
 
     // Convert staged files into fileResults records
     const newItems = stagedFiles.map(item => ({
@@ -567,7 +566,7 @@ async function startCompression() {
 
     const summaryTitle = document.getElementById('summaryTitle');
     if (summaryTitle) {
-        summaryTitle.textContent = 'Optimizing Images...';
+        summaryTitle.textContent = 'Compressing Images...';
     }
 
     renderTable();
@@ -612,14 +611,15 @@ async function startCompression() {
             completedCount++;
             const completedPct = Math.round((completedCount / totalToCompress) * 100);
             if (compressCircularBar) {
-                const offset = CIRCLE_CIRCUMFERENCE - (CIRCLE_CIRCUMFERENCE * (completedPct / 100));
+                const circumference = 264;
+                const offset = circumference - (circumference * completedPct / 100);
                 compressCircularBar.style.strokeDashoffset = offset;
             }
             if (compressCircularPercent) {
                 compressCircularPercent.textContent = `${completedPct}%`;
             }
             if (compressingStatusText) {
-                compressingStatusText.textContent = `Optimized ${completedCount} of ${totalToCompress} images...`;
+                compressingStatusText.textContent = `Compressed ${completedCount} of ${totalToCompress} images...`;
             }
 
             updateTableRow(i);
@@ -637,6 +637,9 @@ async function startCompression() {
     // Finished compression
     isCompressing = false;
     startCompressBtn.disabled = false;
+    if (summaryTitle) {
+        summaryTitle.textContent = 'Compression Complete!';
+    }
     
     // 1. Loading bar gets disappeared
     if (compressingState) compressingState.style.display = 'none';
@@ -1032,6 +1035,18 @@ if (completionClearBtn) {
     completionClearBtn.addEventListener('click', (e) => {
         e.stopPropagation();
         resetAllState();
+    });
+}
+
+if (completionCloseBtn) {
+    completionCloseBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (completionState) completionState.style.display = 'none';
+        uploadBox.classList.remove('has-completed');
+        uploadEmptyState.style.display = 'flex';
+        if (fileResults.length > 0 && summaryBanner) {
+            summaryBanner.style.display = 'block';
+        }
     });
 }
 
