@@ -9,10 +9,10 @@
     "electron": "electron .",
     "backend": "node backend/server.js",
     "test": "node -e \"console.log('OK')\"",
-    "build": "electron-builder --win",
-    "build:nsis": "electron-builder --win nsis",
-    "build:portable": "electron-builder --win portable",
-    "build:dir": "electron-builder --dir"
+    "build": "node scripts/build.js --win",
+    "build:nsis": "node scripts/build.js --win nsis",
+    "build:portable": "node scripts/build.js --win portable",
+    "build:dir": "node scripts/build.js --dir"
   },
   "keywords": [
     "image-compressor",
@@ -40,6 +40,7 @@
     "appId": "com.imress.image-compressor",
     "productName": "Imress",
     "copyright": "Copyright © 2026 Imress",
+    "compression": "maximum",
     "directories": {
       "output": "dist-electron",
       "buildResources": "build-resources"
@@ -49,10 +50,8 @@
       "backend/server.js",
       "frontend/**/*",
       "!frontend/templates/**",
-      "node_modules/**/*",
       "package.json"
     ],
-    "extraResources": [],
     "asar": true,
     "asarUnpack": [
       "node_modules/sharp/**/*",
@@ -69,6 +68,7 @@
     },
     "nsis": {
       "oneClick": false,
+      "perMachine": false,
       "allowToChangeInstallationDirectory": true,
       "installerIcon": "frontend/static/images/icon.ico",
       "uninstallerIcon": "frontend/static/images/icon.ico",
