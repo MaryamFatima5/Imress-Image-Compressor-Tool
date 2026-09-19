@@ -247,12 +247,11 @@ def _to_jpeg_rgb(img):
 def _compress_png(img, settings: dict, orig_len: Optional[int] = None) -> bytes:
     """
     Compress PNG using multi-strategy adaptive optimization:
-    1. Clean lossless DEFLATE with chunk stripping.
-    2. Direct palette re-quantization if image is already mode 'P' (avoids palette inflation).
-    3. libimagequant / TinyPNG quantization with low dither (0.7) to avoid noise inflation.
-    4. Fast zero-dither Pillow octree quantization.
-    5. Adaptive color reduction if still not smaller than original.
-    Always selects the smallest valid output.
+    1. Clean lossless DEFLATE with chunk stripping (compress_level=9, optimize=True).
+    2. Adaptive palette quantization avoiding palette table bloat on small images.
+    3. Multi-tier color budgeting (256, 192, 128, 64, 32).
+    4. Optional libimagequant / TinyPNG quantization.
+    Always selects the smallest valid output strictly reducing file size.
     """
     from PIL import Image
 
@@ -261,85 +260,106 @@ def _compress_png(img, settings: dict, orig_len: Optional[int] = None) -> bytes:
 
     candidates: list[bytes] = []
 
-    # 1. Clean lossless DEFLATE
+    # 1. Clean lossless DEFLATE with max compression level and optimization
     try:
         clean_img = img.copy()
         clean_img.info = {}
         buf_lossless = io.BytesIO()
-        clean_img.save(buf_lossless, format="PNG", compress_level=6)
-        candidates.append(buf_lossless.getvalue())
+        clean_img.save(buf_lossless, format="PNG", compress_level=9, optimize=True)
+        val = buf_lossless.getvalue()
+        if val:
+            candidates.append(val)
     except Exception:
         pass
 
-    # 2. If already palette mode 'P', directly re-quantize palette without RGBA expansion
+    # 2. Inspect actual unique colors to avoid writing huge 256-color palette chunks on small images
+    try:
+        raw_colors = img.getcolors(maxcolors=256)
+        actual_colors = len(raw_colors) if raw_colors else 256
+    except Exception:
+        actual_colors = 256
+
+    color_steps = [c for c in [min(colors, actual_colors), 192, 128, 64, 32] if c <= 256]
+    # Remove duplicates while preserving order
+    color_steps = list(dict.fromkeys(color_steps))
+
+    # 3. Direct palette re-quantization if already mode 'P'
     if img.mode == "P":
-        for col_count in [min(colors, 128), 64]:
+        for col_count in color_steps:
             try:
                 q_img = img.quantize(
                     colors=col_count,
                     method=Image.Quantize.FASTOCTREE,
-                    dither=Image.Dither.FLOYDSTEINBERG,
+                    dither=Image.Dither.NONE,
                 )
                 buf_q = io.BytesIO()
-                q_img.save(buf_q, format="PNG", compress_level=6)
+                q_img.save(buf_q, format="PNG", compress_level=9, optimize=True)
                 val = buf_q.getvalue()
-                candidates.append(val)
-                if orig_len and len(val) < orig_len * 0.8:
-                    break
+                if val:
+                    candidates.append(val)
+                    if orig_len and len(val) < orig_len * 0.75:
+                        break
             except Exception:
                 pass
     else:
         rgba_img = img.convert("RGBA") if has_alpha else img.convert("RGB")
-        iq_succeeded = False
 
-        # 3. libimagequant with moderate dither (0.7)
+        # 4. Try libimagequant if installed
         try:
             import imagequant
-            q_img = imagequant.quantize_pil_image(
-                rgba_img,
-                dithering_level=0.7,
-                max_colors=colors,
-            )
-            buf_q = io.BytesIO()
-            q_img.save(buf_q, format="PNG", compress_level=6)
-            val = buf_q.getvalue()
-            candidates.append(val)
-            if orig_len and len(val) < orig_len:
-                iq_succeeded = True
-        except Exception as exc:
-            _log.debug("imagequant error: %s", exc)
+            for col_count in [min(colors, 256), 128]:
+                try:
+                    q_img = imagequant.quantize_pil_image(
+                        rgba_img,
+                        dithering_level=0.5,
+                        max_colors=col_count,
+                    )
+                    buf_q = io.BytesIO()
+                    q_img.save(buf_q, format="PNG", compress_level=9, optimize=True)
+                    val = buf_q.getvalue()
+                    if val:
+                        candidates.append(val)
+                        if orig_len and len(val) < orig_len * 0.7:
+                            break
+                except Exception:
+                    pass
+        except ImportError:
+            pass
 
-        # 4. Fast zero-dither Pillow octree quantization (only if imagequant didn't already beat target)
-        if not iq_succeeded:
+        # 5. Fast zero-dither Pillow quantization with adaptive color tiers
+        for col_count in color_steps:
             try:
-                q_img = rgba_img.quantize(
-                    colors=colors,
-                    method=Image.Quantize.FASTOCTREE,
-                    dither=Image.Dither.NONE,
-                )
+                if has_alpha:
+                    q_img = rgba_img.quantize(
+                        colors=col_count,
+                        method=Image.Quantize.FASTOCTREE,
+                        dither=Image.Dither.NONE,
+                    )
+                else:
+                    q_img = rgba_img.quantize(
+                        colors=col_count,
+                        method=Image.Quantize.MEDIANCUT,
+                        dither=Image.Dither.NONE,
+                    )
                 buf_q = io.BytesIO()
-                q_img.save(buf_q, format="PNG", compress_level=6)
-                candidates.append(buf_q.getvalue())
+                q_img.save(buf_q, format="PNG", compress_level=9, optimize=True)
+                val = buf_q.getvalue()
+                if val:
+                    candidates.append(val)
+                    if orig_len and len(val) < orig_len * 0.7:
+                        break
             except Exception:
                 pass
 
-        # 5. If still not smaller than original, try 128 colors with zero dither
-        if orig_len and all(len(c) >= orig_len for c in candidates):
-            try:
-                q_img = rgba_img.quantize(
-                    colors=128,
-                    method=Image.Quantize.FASTOCTREE,
-                    dither=Image.Dither.NONE,
-                )
-                buf_q = io.BytesIO()
-                q_img.save(buf_q, format="PNG", compress_level=6)
-                candidates.append(buf_q.getvalue())
-            except Exception:
-                pass
+    # Filter strictly smaller candidates if orig_len is provided
+    if orig_len:
+        smaller = [c for c in candidates if len(c) < orig_len]
+        if smaller:
+            return min(smaller, key=len)
 
     if not candidates:
         buf = io.BytesIO()
-        img.save(buf, format="PNG", compress_level=6)
+        img.save(buf, format="PNG", compress_level=9, optimize=True)
         return buf.getvalue()
 
     return min(candidates, key=len)
@@ -455,7 +475,7 @@ def _compress_pillow(
                 save_all=True,
                 append_images=frames[1:],
                 optimize=True,
-                compress_level=6,
+                compress_level=9,
             )
         else:
             png_bytes = _compress_png(img, settings, orig_len=orig_sz)

@@ -47,6 +47,104 @@ async function mapConcurrent(items, limit, fn) {
 }
 
 /**
+ * Multi-pass adaptive PNG optimizer:
+ * 1. SIMD-accelerated palette quantization with compressionLevel: 9 and effort: 8 (or 9 for small images)
+ * 2. Color-budgeted quantization (192, 128, 64, 32) to prevent palette bloat on small files & icons
+ * 3. Lossless clean max-deflate pass (strip ancillary metadata, optimize scanlines)
+ * 4. Progressive quality stepping if still not smaller than original
+ * Guaranteed to select the smallest valid candidate that strictly reduces file size.
+ */
+async function compressPngBuffer(buffer) {
+    const origLen = buffer.length;
+    const isSmall = origLen < 120 * 1024; // < 120KB
+    const candidates = [];
+
+    // Pass 1: Standard high-quality palette quantization
+    try {
+        const out1 = await sharp(buffer, { failOn: 'none' })
+            .png({
+                quality: 75,
+                compressionLevel: 9,
+                palette: true,
+                effort: isSmall ? 9 : 8,
+                dither: 0,
+                adaptiveFiltering: true
+            })
+            .toBuffer();
+        if (out1 && out1.length < origLen) {
+            candidates.push(out1);
+        }
+    } catch (e) {}
+
+    // Pass 2: Color-budgeted palette quantization (especially effective for small icons, cards, graphics)
+    const colorBudgets = isSmall ? [192, 128, 64, 32] : [192, 128];
+    for (const colours of colorBudgets) {
+        // If Pass 1 already achieved massive >35% reduction, skip trying all smaller budgets
+        if (candidates.length > 0 && candidates[0].length < origLen * 0.65) break;
+        try {
+            const out2 = await sharp(buffer, { failOn: 'none' })
+                .png({
+                    colours: colours,
+                    quality: 72,
+                    compressionLevel: 9,
+                    palette: true,
+                    effort: 9,
+                    dither: 0,
+                    adaptiveFiltering: true
+                })
+                .toBuffer();
+            if (out2 && out2.length < origLen) {
+                candidates.push(out2);
+                if (out2.length < origLen * 0.70) break;
+            }
+        } catch (e) {}
+    }
+
+    // Pass 3: Clean lossless DEFLATE level 9 with all metadata stripped
+    try {
+        const out3 = await sharp(buffer, { failOn: 'none' })
+            .png({
+                compressionLevel: 9,
+                effort: 9,
+                palette: false,
+                adaptiveFiltering: true
+            })
+            .toBuffer();
+        if (out3 && out3.length < origLen) {
+            candidates.push(out3);
+        }
+    } catch (e) {}
+
+    // Pass 4: Stepped quality fallback if still no candidate smaller than original
+    if (candidates.length === 0) {
+        for (const q of [65, 55]) {
+            try {
+                const out4 = await sharp(buffer, { failOn: 'none' })
+                    .png({
+                        quality: q,
+                        colours: 128,
+                        compressionLevel: 9,
+                        palette: true,
+                        effort: 9,
+                        dither: 0,
+                        adaptiveFiltering: true
+                    })
+                    .toBuffer();
+                if (out4 && out4.length < origLen) {
+                    candidates.push(out4);
+                    break;
+                }
+            } catch (e) {}
+        }
+    }
+
+    if (candidates.length > 0) {
+        return candidates.reduce((min, c) => c.length < min.length ? c : min);
+    }
+    return buffer;
+}
+
+/**
  * High-performance image compression using hardware-accelerated Sharp
  */
 async function compressImageBuffer(buffer, originalname) {
@@ -70,26 +168,8 @@ async function compressImageBuffer(buffer, originalname) {
             })
             .toBuffer();
     } else if (ext === '.png') {
-        // High-speed PNG compression: level 6 zlib with fast palette quantization
-        try {
-            outputBuffer = await sharpInstance
-                .png({
-                    quality: 75,
-                    compressionLevel: 6,
-                    palette: true,
-                    effort: 1,
-                    dither: 0,
-                    adaptiveFiltering: true
-                })
-                .toBuffer();
-        } catch (e) {
-            outputBuffer = await sharpInstance
-                .png({
-                    compressionLevel: 6,
-                    adaptiveFiltering: true
-                })
-                .toBuffer();
-        }
+        // Multi-pass adaptive PNG optimizer
+        outputBuffer = await compressPngBuffer(buffer);
     } else if (ext === '.webp') {
         // Fast WebP compression (effort: 0 is >2.5x faster with virtually identical size)
         outputBuffer = await sharpInstance
@@ -246,4 +326,4 @@ if (require.main === module) {
     startServer(port);
 }
 
-module.exports = { app, startServer };
+module.exports = { app, startServer, compressImageBuffer, compressPngBuffer };
