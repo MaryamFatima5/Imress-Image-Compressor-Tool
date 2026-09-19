@@ -1,0 +1,226 @@
+/* ==========================================================================
+   Footer
+   ========================================================================== */
+
+.app-footer {
+    text-align: center;
+    color: var(--text-muted);
+    font-size: 12.5px;
+    padding: 8px 0;
+}
+
+/* ==========================================================================
+   Responsive Design
+   ========================================================================== */
+
+@media (max-width: 768px) {
+    body {
+        padding: 16px 12px;
+    }
+
+    .main-card {
+        padding: 18px;
+    }
+
+    .summary-content {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .summary-actions {
+        width: 100%;
+        justify-content: flex-start;
+    }
+
+    .table-footer-bar {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .completion-metrics {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* ==========================================================================
+   Built-in Startup Loading Page (Initial Launch Only - 4 Seconds)
+   ========================================================================== */
+
+.app-loading-page {
+    position: fixed;
+    inset: 0;
+    z-index: 100000;
+    background-color: var(--bg-canvas);
+    background-image: 
+        radial-gradient(at 15% 15%, rgba(255, 46, 147, 0.08) 0px, transparent 55%),
+        radial-gradient(at 85% 85%, rgba(230, 23, 125, 0.07) 0px, transparent 55%),
+        radial-gradient(at 50% 50%, rgba(255, 240, 246, 0.5) 0px, transparent 75%);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 24px;
+    opacity: 1;
+    visibility: visible;
+    transition: opacity 0.55s cubic-bezier(0.16, 1, 0.3, 1),
+                visibility 0.55s cubic-bezier(0.16, 1, 0.3, 1),
+                transform 0.55s cubic-bezier(0.16, 1, 0.3, 1);
+    user-select: none;
+    pointer-events: all;
+    overflow: hidden;
+}
+
+.app-loading-page.fade-out {
+    opacity: 0;
+    visibility: hidden;
+    transform: scale(1.025);
+    pointer-events: none;
+}
+
+/* Ambient glow in loading center */
+.loading-ambient-glow {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: clamp(320px, 50vw, 650px);
+    height: clamp(260px, 40vh, 450px);
+    transform: translate(-50%, -50%);
+    background: radial-gradient(ellipse at center, rgba(230, 23, 125, 0.14) 0%, rgba(255, 51, 143, 0.04) 55%, transparent 75%);
+    filter: blur(55px);
+    pointer-events: none;
+    z-index: 1;
+    animation: ambientPulse 3s ease-in-out infinite alternate;
+}
+
+@keyframes ambientPulse {
+    0% { transform: translate(-50%, -50%) scale(0.92); opacity: 0.75; }
+    100% { transform: translate(-50%, -50%) scale(1.08); opacity: 1; }
+}
+
+/* Center Content */
+.loading-center {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 22px;
+}
+
+.loading-logo-box {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    animation: loadingLogoIntro 0.85s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.loading-logo-img {
+    max-width: 320px;
+    width: min(80vw, 320px);
+    height: auto;
+    filter: drop-shadow(0 12px 28px rgba(230, 23, 125, 0.18));
+    animation: gentleLogoFloat 3s ease-in-out infinite;
+}
+
+@keyframes loadingLogoIntro {
+    0% {
+        opacity: 0;
+        transform: translateY(22px) scale(0.95);
+    }
+    100% {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+@keyframes gentleLogoFloat {
+    0%, 100% {
+        transform: translateY(0);
+    }
+    50% {
+        transform: translateY(-5px);
+    }
+}
+
+/* Sleek Professional Progress Bar directly under Logo */
+.loading-bar-area {
+    position: relative;
+    z-index: 2;
+    width: 100%;
+    max-width: 250px;
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+    animation: loadingBottomIntro 1s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes loadingBottomIntro {
+    0% {
+        opacity: 0;
+        transform: translateY(12px);
+    }
+    100% {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.loading-track {
+    width: 100%;
+    height: 5px;
+    background: rgba(24, 30, 41, 0.06);
+    border: 1px solid rgba(230, 23, 125, 0.12);
+    border-radius: var(--radius-full);
+    overflow: hidden;
+    position: relative;
+    box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.04);
+}
+
+.loading-fill {
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(90deg, #FF2E93 0%, #E6177D 70%, #FF5CA3 100%);
+    border-radius: var(--radius-full);
+    box-shadow: 0 0 12px rgba(230, 23, 125, 0.55);
+    position: relative;
+    overflow: hidden;
+    will-change: width;
+}
+
+.loading-fill::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: 80px;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.55), transparent);
+    animation: barShimmer 1.8s infinite linear;
+}
+
+@keyframes barShimmer {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(350%); }
+}
+
+.loading-bar-info {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 2px;
+}
+
+.loading-bar-status {
+    font-size: 11.5px;
+    font-weight: 500;
+    color: var(--text-muted);
+    letter-spacing: 0.2px;
+}
+
+.loading-bar-percent {
+    font-size: 11.5px;
+    font-weight: 700;
+    color: var(--primary);
+    font-variant-numeric: tabular-nums;
+}
