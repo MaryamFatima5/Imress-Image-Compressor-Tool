@@ -2,6 +2,10 @@
   <img src="frontend/static/images/readme-hero.svg" alt="Imress — private desktop image compression" width="100%">
 </p>
 
+<p align="center">
+  <img src="frontend/static/images/readme-badges.svg" alt="Release v1.0.1 · Windows x64 · Sharp engine · 100% local processing · MIT license" width="100%">
+</p>
+
 ---
 
 ## Why Imress?
@@ -39,7 +43,7 @@ Imress is a focused desktop app for making image files smaller without sending t
   </tr>
 </table>
 
-> Every visual on this page is a local repository asset. The header animation and badges are self-contained—no third-party badge service or remotely generated artwork.
+> Every visual on this page is a local repository asset. The hero animation and badge strip are self-contained—no third-party badge service or remotely generated artwork.
 
 ## Download for Windows
 
