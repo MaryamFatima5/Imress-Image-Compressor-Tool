@@ -1,213 +1,122 @@
-# 🗜️ Imress - Image Compressor
+<p align="center">
+  <img src="frontend/static/images/logo.png" alt="Imress" width="440">
+</p>
+
+<h3 align="center">Private, high-speed image compression for Windows.</h3>
 
 <p align="center">
-  <img src="static/images/logo.png" alt="Imress Logo" width="400"/>
+  Compress JPEG, PNG, and WebP images in batches—entirely on your device.
 </p>
 
 <p align="center">
-  <b>A fast, lightweight, and professional desktop image compression tool — built with Python & Flask.</b>
+  <strong>Windows 10/11</strong> &nbsp;•&nbsp; <strong>Electron</strong> &nbsp;•&nbsp; <strong>Sharp</strong> &nbsp;•&nbsp; <strong>Offline-first</strong> &nbsp;•&nbsp; <strong>MIT License</strong>
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/Python-3.8+-blue?style=for-the-badge&logo=python"/>
-  <img src="https://img.shields.io/badge/Flask-3.0-black?style=for-the-badge&logo=flask"/>
-  <img src="https://img.shields.io/badge/Platform-Windows-0078D6?style=for-the-badge&logo=windows"/>
-  <img src="https://img.shields.io/badge/License-MIT-green?style=for-the-badge"/>
+  <a href="https://github.com/MaryamFatima5/Imress-Image-Compressor-Tool/releases/latest/download/Imress.Setup.1.0.0.exe">
+    <img src="frontend/static/images/download-windows.svg" alt="Download Imress for Windows" width="300">
+  </a>
+  &nbsp;&nbsp;·&nbsp;&nbsp;
+  <a href="https://github.com/MaryamFatima5/Imress-Image-Compressor-Tool/releases">View all releases</a>
+</p>
+
+<p align="center">
+  <sub>Windows installer · 64-bit · Download starts immediately</sub>
 </p>
 
 ---
 
-## 📌 About
+## Why Imress?
 
-**Imress** is a desktop image compression application that allows users to compress multiple images at once — quickly, efficiently, and without losing significant quality. Built with Python (Flask + Pillow) on the backend and HTML/CSS/JS on the frontend, wrapped into a native desktop window using PyWebView.
+Imress is a focused desktop app for making image files smaller without sending them to a cloud service. Drop in a batch, compress it, review the savings, and save files individually or as one ZIP archive.
 
-No internet connection required. No image uploads to any server. Everything runs **locally on your machine**.
+- **Batch ready** — add multiple images at once with drag and drop.
+- **Fast by design** — powered by Sharp with multi-core processing.
+- **Clear results** — compare original and optimized sizes per file.
+- **Flexible export** — save individual files or download the full batch as a ZIP.
+- **Private by default** — processing stays on your computer.
 
----
+## Product tour
 
-## ✨ Features
+<table>
+  <tr>
+    <td width="50%" valign="top">
+      <img src="frontend/static/images/s1.png" alt="Imress startup screen" width="100%">
+      <p align="center"><sub>Fast, polished desktop startup</sub></p>
+    </td>
+    <td width="50%" valign="top">
+      <img src="frontend/static/images/s2.png" alt="Imress drag and drop upload screen" width="100%">
+      <p align="center"><sub>Drag, drop, and select your files</sub></p>
+    </td>
+  </tr>
+  <tr>
+    <td width="50%" valign="top">
+      <img src="frontend/static/images/s3.png" alt="Imress batch compression queue" width="100%">
+      <p align="center"><sub>Review a batch before compression</sub></p>
+    </td>
+    <td width="50%" valign="top">
+      <img src="frontend/static/images/s4.png" alt="Imress compression results" width="100%">
+      <p align="center"><sub>See savings and export your results</sub></p>
+    </td>
+  </tr>
+</table>
 
-- 📁 **Multiple Image Upload** — Select and compress multiple images at once
-- 🖱️ **Drag & Drop Support** — Simply drag images into the upload area
-- 📊 **Live Status Table** — Real-time status updates (Pending → Compressing → Complete)
-- 🗂️ **Session Persistence** — Previously uploaded images stay visible when new ones are added (within the same session)
-- 📥 **Individual Download** — Download each compressed image separately
-- 📦 **ZIP Download** — Download all compressed images in one ZIP file
-- 🏷️ **Original Filename Preserved** — Compressed files keep their original names
-- 🖼️ **Original Format Preserved** — JPG stays JPG, PNG stays PNG, WEBP stays WEBP
-- 📉 **Compression Stats** — See original size, optimized size, and percentage saved per image
-- 🎯 **Summary Banner** — Overall compression percentage, total files optimized, total space saved
-- 🎨 **Polished UI** — Smooth animations, hover effects, loading spinner, responsive design
-- 🖥️ **Native Desktop App** — Runs as a standalone Windows desktop application (no browser needed)
-- 📦 **Windows Installer** — Professional Setup Wizard with desktop shortcut and Start Menu entry
+> All visuals above are static, local repository assets—no remote image services, generated badges, animations, or runtime-rendered artwork.
 
----
+## How it works
 
-## 🖼️ Screenshots
+1. **Add images** — drag files into Imress or browse from your computer.
+2. **Compress** — optimize the selected batch with a single click.
+3. **Save** — download each optimized image or export everything as a ZIP.
 
-> Main Interface
+## Supported formats
 
-![Main UI](static/images/logo.png)
+| Format | Input | Output |
+| :-- | :--: | :--: |
+| JPEG / JPG | ✓ | ✓ |
+| PNG | ✓ | ✓ |
+| WebP | ✓ | ✓ |
 
----
+## Privacy
 
-## 🛠️ Tech Stack
+Your images are processed locally by the app. Imress does not upload files to a remote server or require an account to compress them.
 
-| Layer | Technology |
-|-------|-----------|
-| Backend Engine | Python 3.8+, FastAPI, Uvicorn |
-| Core Compression | Pillow, libimagequant (TinyPNG engine), pillow-heif (HEIC/AVIF) |
-| Parallel Processing | ThreadPoolExecutor Worker Pool |
-| Frontend | HTML5, Modern Vanilla CSS3, JavaScript (Preserved UI) |
-| Desktop App | Electron 31+ / PyWebView 5+ |
+## Run from source
 
----
+### Requirements
 
-## 📂 Project Structure
-
-```
-image-compressor/
-│
-├── electron/               # Electron main & preload configuration
-├── backend/                # Embedded high-performance server & engines
-├── frontend/               # UI static assets, modules & styles
-│
-├── static/
-│   ├── style.css           # UI styling & animations
-│   ├── script.js           # Frontend logic
-│   └── images/
-│       ├── logo.png        # Imress logo
-│       └── icon.ico        # App icon
-│
-├── templates/
-│   └── index.html          # Main HTML page
-│
-├── dist/
-│   └── Imress.exe          # Compiled desktop executable
-│
-└── installer_output/
-    └── Imress_Setup.exe    # Windows installer
-```
-
----
-
-## ⚙️ Installation & Setup (For Developers)
-
-### Prerequisites
-- Python 3.8 or higher
-- pip
-
-### Steps
-
-**1. Clone the repository**
-```bash
-git clone https://github.com/yourusername/imress.git
-cd imress
-```
-
-**2. Create and activate virtual environment**
-```bash
-python -m venv venv
-venv\Scripts\activate      # Windows
-source venv/bin/activate   # Mac/Linux
-```
-
-**3. Install dependencies**
-```bash
-pip install flask pillow pywebview pyinstaller
-```
-
-**4. Run the app**
-```bash
-python desktop.py
-```
-
----
-
-## 📦 Build Executable (Windows)
-
-To build a standalone `.exe`:
+- Node.js 18 or later
+- npm
+- Windows for the packaged desktop installer
 
 ```bash
-pyinstaller --onefile --windowed --add-data "templates;templates" --add-data "static;static" --icon "static\images\icon.ico" --name Imress desktop.py
+git clone https://github.com/MaryamFatima5/Imress-Image-Compressor-Tool.git
+cd Imress-Image-Compressor-Tool
+npm install
+npm run dev
 ```
 
-The output will be at `dist/Imress.exe`.
-
-## 💿 Build Windows Installer
-
-Run the following command in the project directory:
+### Build the Windows installer
 
 ```bash
 npm run build
 ```
 
-This will automatically create the complete, signed NSIS Windows installer in `dist-electron/Imress Setup 1.0.0.exe`.
+The installer is created in `dist-electron/`.
 
----
+## Built with
 
-## 🚀 How to Use
+| Layer | Technology |
+| :-- | :-- |
+| Desktop shell | Electron |
+| Compression engine | Sharp |
+| Local service | Node.js + Express |
+| Archive export | Archiver + JSZip |
 
-1. Launch **Imress** from desktop shortcut or Start Menu
-2. **Drag & Drop** images into the upload area, or click to browse
-3. Images will be compressed automatically — watch the live status table
-4. Once complete:
-   - Click **⬇️ Download** next to any image to save it individually
-   - Click **📦 Download All as ZIP** to get all images in one file
-5. Add more images anytime — previous results stay visible in the same session
+## License
 
----
+Distributed under the [MIT License](LICENSE).
 
-## 📊 Supported Formats
-
-| Format | Input | Output |
-|--------|-------|--------|
-| JPEG / JPG | ✅ | ✅ |
-| PNG | ✅ | ✅ |
-| WEBP | ✅ | ✅ |
-
----
-
-## 🔒 Privacy
-
-Imress processes all images **locally on your device**. No images are uploaded to any server or cloud. Your files never leave your computer.
-
----
-
-## 👩‍💻 Developer
-
-**Developed by:** [Your Name]  
-**Degree:** BS Artificial Intelligence  
-**GitHub:** [github.com/yourusername](https://github.com/yourusername)  
-
----
-
-## 📄 License
-
-This project is licensed under the **MIT License** — feel free to use, modify, and distribute.
-
-```
-MIT License
-
-Copyright (c) 2026 Imress
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-```
-
----
-
-## 🤝 Contributing
-
-Pull requests are welcome! For major changes, please open an issue first to discuss what you would like to change.
-
----
-
-<p align="center">Made with ❤️ by Imress Team</p>
+<p align="center">
+  <sub>Made for smaller files and a simpler workflow.</sub>
+</p>
