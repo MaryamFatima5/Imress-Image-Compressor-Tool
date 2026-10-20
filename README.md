@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="frontend/static/images/readme-hero.svg" alt="Imress — private desktop image compression" width="100%">
+  <img src="frontend/static/images/readme-hero-light-pink.svg" alt="Imress — private desktop image compression" width="100%">
 </p>
 
 <p align="center">
