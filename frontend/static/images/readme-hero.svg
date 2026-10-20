@@ -1,0 +1,68 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="330" viewBox="0 0 1200 330" role="img" aria-labelledby="title description">
+  <title id="title">Imress — private desktop image compression</title>
+  <desc id="description">An animated local Imress header with compression rings and badges for Windows, local processing, and batch compression.</desc>
+  <defs>
+    <linearGradient id="background" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#111a31"/>
+      <stop offset="1" stop-color="#25152e"/>
+    </linearGradient>
+    <linearGradient id="accent" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#ff2b86"/>
+      <stop offset="1" stop-color="#ff7eb6"/>
+    </linearGradient>
+    <filter id="glow" x="-60%" y="-60%" width="220%" height="220%">
+      <feGaussianBlur stdDeviation="8" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+  <rect width="1200" height="330" rx="28" fill="url(#background)"/>
+  <path d="M0 263C169 217 262 318 445 274S774 182 1200 239V330H0Z" fill="#ff2b86" opacity=".08"/>
+  <g fill="none" stroke="#ff6aa9" opacity=".23">
+    <circle cx="174" cy="151" r="102" stroke-width="1"/>
+    <circle cx="174" cy="151" r="126" stroke-width="1" stroke-dasharray="5 10"/>
+  </g>
+  <g transform="translate(174 151)">
+    <circle r="82" fill="#ff2b86" opacity=".12" filter="url(#glow)">
+      <animate attributeName="r" values="74;92;74" dur="2.4s" repeatCount="indefinite"/>
+      <animate attributeName="opacity" values=".18;.05;.18" dur="2.4s" repeatCount="indefinite"/>
+    </circle>
+    <circle r="65" fill="#192541" stroke="#ff4e98" stroke-width="4"/>
+    <rect x="-39" y="-29" width="78" height="58" rx="12" fill="url(#accent)"/>
+    <path d="M-17-38h34l8 10h-50l8-10Z" fill="#ff8abe"/>
+    <circle r="21" fill="#192541" stroke="#fff" stroke-width="4"/>
+    <circle r="10" fill="#7ee8ff"/>
+    <path d="M-51 0h-17m119 0h17M0-51v-17M0 51v17" stroke="#ff79b4" stroke-width="5" stroke-linecap="round">
+      <animateTransform attributeName="transform" type="rotate" values="0;360" dur="9s" repeatCount="indefinite"/>
+    </path>
+  </g>
+  <g font-family="Arial, Helvetica, sans-serif">
+    <text x="315" y="115" fill="#ffffff" font-size="64" font-weight="800" letter-spacing="3">IMRESS</text>
+    <text x="319" y="154" fill="#ff9fc8" font-size="17" font-weight="700" letter-spacing="3">DESKTOP IMAGE COMPRESSION</text>
+    <text x="319" y="193" fill="#d8dfef" font-size="22">Make images lighter. Keep your files private.</text>
+  </g>
+  <g font-family="Arial, Helvetica, sans-serif" font-size="15" font-weight="700">
+    <g transform="translate(319 226)">
+      <rect width="166" height="42" rx="21" fill="#ffffff" fill-opacity=".08" stroke="#ff78b3" stroke-opacity=".7"/>
+      <rect x="16" y="13" width="15" height="15" rx="2" fill="#ff4e98"/>
+      <path d="M23.5 14v13M17 20.5h13" stroke="#fff" stroke-width="2"/>
+      <text x="43" y="27" fill="#ffffff">BATCH READY</text>
+    </g>
+    <g transform="translate(501 226)">
+      <rect width="183" height="42" rx="21" fill="#ffffff" fill-opacity=".08" stroke="#70e1d1" stroke-opacity=".7"/>
+      <path d="M18 26v-8a7 7 0 0 1 14 0v8m-16 0h18v10H16V26Z" fill="#49d7c2"/>
+      <text x="46" y="27" fill="#ffffff">LOCAL ONLY</text>
+    </g>
+    <g transform="translate(700 226)">
+      <rect width="172" height="42" rx="21" fill="#ffffff" fill-opacity=".08" stroke="#88b5ff" stroke-opacity=".7"/>
+      <path d="M17 14h7v8h-7zm9 0h7v8h-7zm-9 10h7v8h-7zm9 0h7v8h-7z" fill="#78a9ff"/>
+      <text x="45" y="27" fill="#ffffff">WINDOWS</text>
+    </g>
+  </g>
+  <g transform="translate(968 83)" fill="none" stroke="#ff77b4" stroke-linecap="round" stroke-width="3" opacity=".85">
+    <path d="M0 18h142" stroke-dasharray="7 9">
+      <animate attributeName="stroke-dashoffset" values="0;-32" dur="1.5s" repeatCount="indefinite"/>
+    </path>
+    <path d="m132 9 10 9-10 9"/>
+    <text x="0" y="-10" fill="#ffb2d3" stroke="none" font-family="Arial, Helvetica, sans-serif" font-size="12" font-weight="700" letter-spacing="1.8">OPTIMIZE</text>
+  </g>
+</svg>

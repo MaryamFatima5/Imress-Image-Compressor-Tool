@@ -1,27 +1,5 @@
 <p align="center">
-  <img src="frontend/static/images/logo.png" alt="Imress" width="440">
-</p>
-
-<h3 align="center">Private, high-speed image compression for Windows.</h3>
-
-<p align="center">
-  Compress JPEG, PNG, and WebP images in batches—entirely on your device.
-</p>
-
-<p align="center">
-  <strong>Windows 10/11</strong> &nbsp;•&nbsp; <strong>Electron</strong> &nbsp;•&nbsp; <strong>Sharp</strong> &nbsp;•&nbsp; <strong>Offline-first</strong> &nbsp;•&nbsp; <strong>MIT License</strong>
-</p>
-
-<p align="center">
-  <a href="https://github.com/MaryamFatima5/Imress-Image-Compressor-Tool/releases/latest/download/Imress.Setup.1.0.0.exe">
-    <img src="frontend/static/images/download-windows.svg" alt="Download Imress for Windows" width="300">
-  </a>
-  &nbsp;&nbsp;·&nbsp;&nbsp;
-  <a href="https://github.com/MaryamFatima5/Imress-Image-Compressor-Tool/releases">View all releases</a>
-</p>
-
-<p align="center">
-  <sub>Windows installer · 64-bit · Download starts immediately</sub>
+  <img src="frontend/static/images/readme-hero.svg" alt="Imress — private desktop image compression" width="100%">
 </p>
 
 ---
@@ -61,7 +39,19 @@ Imress is a focused desktop app for making image files smaller without sending t
   </tr>
 </table>
 
-> All visuals above are static, local repository assets—no remote image services, generated badges, animations, or runtime-rendered artwork.
+> Every visual on this page is a local repository asset. The header animation and badges are self-contained—no third-party badge service or remotely generated artwork.
+
+## Download for Windows
+
+Install Imress with the 64-bit Windows installer. The button takes you directly to the latest release download.
+
+<p align="center">
+  <a href="https://github.com/MaryamFatima5/Imress-Image-Compressor-Tool/releases/latest/download/Imress.Setup.1.0.0.exe">
+    <img src="frontend/static/images/download-windows.svg" alt="Download Imress for Windows" width="300">
+  </a>
+  <br>
+  <sub>Windows 10/11 · 64-bit installer · <a href="https://github.com/MaryamFatima5/Imress-Image-Compressor-Tool/releases">View all releases</a></sub>
+</p>
 
 ## How it works
 
