@@ -1,0 +1,283 @@
+/* ==========================================================================
+   Upload Dropzone
+   ========================================================================== */
+
+/* ==========================================================================
+   Upload Dropzone & Staging
+   ========================================================================== */
+
+.upload-dropzone {
+    border: 2.5px dashed var(--primary);
+    background: #FFFAFC;
+    border-radius: var(--radius-md);
+    padding: 36px 24px;
+    text-align: center;
+    cursor: pointer;
+    transition: var(--transition);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    position: relative;
+    overflow: hidden;
+}
+
+.upload-dropzone::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at center, rgba(255, 46, 147, 0.05) 0%, transparent 70%);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    pointer-events: none;
+}
+
+.upload-dropzone:hover {
+    background: var(--primary-soft);
+    border-color: var(--primary-light);
+    transform: translateY(-2px);
+    box-shadow: 0 10px 25px -5px rgba(230, 23, 125, 0.15);
+}
+
+.upload-dropzone:hover::before {
+    opacity: 1;
+}
+
+.upload-dropzone.dragover {
+    background: #FFE2EE !important;
+    border-color: var(--primary-dark) !important;
+    transform: scale(1.01) !important;
+    box-shadow: 0 12px 30px -4px rgba(230, 23, 125, 0.25) !important;
+}
+
+.upload-dropzone.has-staged {
+    padding: 20px;
+    cursor: default;
+    background: #FFFDFE;
+    border-style: solid;
+    border-width: 1.5px;
+    border-color: rgba(230, 23, 125, 0.35);
+}
+
+.upload-dropzone.has-staged:hover {
+    transform: none;
+    box-shadow: var(--shadow-md);
+}
+
+/* Empty State */
+.upload-empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+}
+
+.upload-icon-wrapper {
+    width: 64px;
+    height: 64px;
+    border-radius: var(--radius-full);
+    background: var(--primary-soft);
+    color: var(--primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 4px;
+    transition: var(--transition);
+    border: 1px solid var(--primary-border);
+}
+
+.upload-dropzone:hover .upload-icon-wrapper {
+    background: var(--primary);
+    color: #FFFFFF;
+    transform: translateY(-4px) scale(1.05);
+    box-shadow: var(--primary-glow);
+}
+
+.upload-icon-svg {
+    width: 32px;
+    height: 32px;
+}
+
+.upload-title {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--text-main);
+}
+
+.upload-highlight {
+    color: var(--primary);
+    text-decoration: underline;
+    text-underline-offset: 4px;
+}
+
+.upload-meta {
+    font-size: 13px;
+    color: var(--text-muted);
+    margin-top: -4px;
+}
+
+.format-badges {
+    display: flex;
+    gap: 8px;
+    margin-top: 6px;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.format-tag {
+    background: #FFFFFF;
+    color: var(--primary);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    padding: 4px 10px;
+    border-radius: var(--radius-sm);
+    border: 1px solid rgba(230, 23, 125, 0.2);
+    box-shadow: var(--shadow-sm);
+}
+
+/* ==========================================================================
+   Professional Circle Scanning Radar Animation
+   ========================================================================== */
+
+.scanning-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 30px 20px;
+    gap: 20px;
+    width: 100%;
+    animation: fadeIn 0.3s ease;
+}
+
+.circular-progress-wrap {
+    position: relative;
+    width: 104px;
+    height: 104px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    filter: drop-shadow(0 4px 14px rgba(230, 23, 125, 0.25));
+}
+
+.circular-progress-svg {
+    width: 100%;
+    height: 100%;
+    transform: rotate(-90deg);
+}
+
+.circle-track {
+    fill: none;
+    stroke: rgba(230, 23, 125, 0.12);
+    stroke-width: 7;
+}
+
+.circle-bar {
+    fill: none;
+    stroke: url(#circlePinkGrad);
+    stroke-width: 7;
+    stroke-linecap: round;
+    stroke-dasharray: 264;
+    stroke-dashoffset: 264;
+    transition: stroke-dashoffset 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+#compressCircularBar {
+    stroke: url(#circleCompressGrad);
+}
+
+.circular-progress-content {
+    position: absolute;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.circular-percent {
+    font-size: 17px;
+    font-weight: 800;
+    color: var(--primary);
+    line-height: 1.1;
+}
+
+.circular-label {
+    font-size: 8.5px;
+    font-weight: 700;
+    letter-spacing: 0.8px;
+    color: var(--text-muted);
+}
+
+.scanning-info {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+}
+
+.scanning-title {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--text-main);
+    letter-spacing: -0.2px;
+}
+
+.scanning-status {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13.5px;
+    color: var(--text-secondary);
+}
+
+.pulse-dot-pink {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--primary);
+    animation: pulse 1.6s infinite;
+}
+
+/* ==========================================================================
+   Active Live Compression Circular Progress inside Dropzone
+   ========================================================================== */
+.compressing-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 24px 20px;
+    gap: 16px;
+    width: 100%;
+    animation: fadeIn 0.3s ease;
+}
+
+.compressing-info {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    text-align: center;
+}
+
+.compressing-title {
+    font-size: 17px;
+    font-weight: 800;
+    color: var(--text-main);
+    letter-spacing: -0.2px;
+}
+
+.compressing-status {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13.5px;
+    color: var(--text-secondary);
+    max-width: 520px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+

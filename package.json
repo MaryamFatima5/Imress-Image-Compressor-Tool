@@ -1,0 +1,86 @@
+{
+  "name": "imress-image-compressor",
+  "version": "1.0.0",
+  "description": "High performance desktop and web image compression tool",
+  "main": "electron/main.js",
+  "scripts": {
+    "start": "electron .",
+    "dev": "electron .",
+    "electron": "electron .",
+    "backend": "node backend/server.js",
+    "test": "node -e \"console.log('OK')\"",
+    "build": "node scripts/build.js --win",
+    "build:nsis": "node scripts/build.js --win nsis",
+    "build:portable": "node scripts/build.js --win portable",
+    "build:dir": "node scripts/build.js --dir"
+  },
+  "keywords": [
+    "image-compressor",
+    "electron",
+    "sharp",
+    "offline",
+    "desktop"
+  ],
+  "author": "Imress",
+  "license": "MIT",
+  "dependencies": {
+    "archiver": "^7.0.1",
+    "cors": "^2.8.5",
+    "express": "^4.21.2",
+    "jszip": "^3.10.2",
+    "multer": "^1.4.5-lts.1",
+    "sharp": "^0.33.5"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2",
+    "electron": "^31.7.7",
+    "electron-builder": "^26.15.3"
+  },
+  "build": {
+    "appId": "com.imress.image-compressor",
+    "productName": "Imress",
+    "copyright": "Copyright © 2026 Imress",
+    "compression": "maximum",
+    "directories": {
+      "output": "dist-electron",
+      "buildResources": "build-resources"
+    },
+    "files": [
+      "electron/**/*",
+      "backend/server.js",
+      "frontend/**/*",
+      "!frontend/templates/**",
+      "package.json"
+    ],
+    "asar": true,
+    "asarUnpack": [
+      "node_modules/sharp/**/*",
+      "node_modules/@img/**/*"
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": ["x64"]
+        }
+      ],
+      "icon": "frontend/static/images/icon.ico"
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "installerIcon": "frontend/static/images/icon.ico",
+      "uninstallerIcon": "frontend/static/images/icon.ico",
+      "installerHeaderIcon": "frontend/static/images/icon.ico",
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "Imress",
+      "uninstallDisplayName": "Imress - Image Compressor",
+      "deleteAppDataOnUninstall": true
+    },
+    "portable": {
+      "artifactName": "Imress-Portable-${version}.${ext}"
+    }
+  }
+}

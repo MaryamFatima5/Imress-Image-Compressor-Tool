@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Imress - Professional Image Compressor</title>
+    <!-- Modern Typography -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="static/style.css">
+</head>
+<body>
+
+    <!-- Built-in App Startup Loading Page (Runs for 4 seconds on initial launch only) -->
+    <div id="appLoadingPage" class="app-loading-page" role="dialog" aria-label="Loading Imress">
+        <div class="loading-ambient-glow"></div>
+        
+        <div class="loading-center">
+            <div class="loading-logo-box">
+                <img src="static/images/logo.png" alt="Imress Logo" class="loading-logo-img" onerror="this.style.display='none'; document.getElementById('loadingLogoFallback').style.display='flex'">
+                <div id="loadingLogoFallback" class="logo-fallback" style="display:none;">
+                    <svg class="logo-symbol-svg" width="36" height="36" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"></path>
+                    </svg>
+                    <span class="logo-text" style="font-size: 32px;">IMRESS</span>
+                </div>
+            </div>
+
+            <!-- Sleek Professional Progress Bar directly under Logo -->
+            <div class="loading-bar-area">
+                <div class="loading-track">
+                    <div id="loadingBarFill" class="loading-fill"></div>
+                </div>
+                <div class="loading-bar-info">
+                    <span id="loadingStatusText" class="loading-bar-status">Starting Imress Engine...</span>
+                    <span id="loadingPercentText" class="loading-bar-percent">0%</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="app-wrapper">
+
+        <!-- Top Header & Brand -->
+        <header class="app-header">
+            <div class="brand-container">
+                <img src="static/images/logo.png" alt="Imress Logo" class="brand-logo" onerror="this.style.display='none'; document.getElementById('logoFallback').style.display='flex'">
+                <div id="logoFallback" class="logo-fallback" style="display:none;">
+                    <svg class="logo-symbol-svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"></path>
+                    </svg>
+                    <span class="logo-text">IMRESS</span>
+                </div>
+                <div class="badge-pill">
+                    <span class="pulse-dot"></span>
+                    <span>High-Speed Lossless Compressor</span>
+                </div>
+            </div>
+            <p class="header-subtitle">Compress JPEG, PNG, and WEBP images in seconds with zero quality loss</p>
+        </header>
+
+        <!-- Main Upload Card -->
+        <main class="main-card">
+            
+            <!-- Upload Dropzone -->
+            <div class="upload-dropzone" id="uploadBox">
+                <input type="file" id="fileInput" accept="image/jpeg,image/png,image/webp" multiple hidden>
+                
+                <!-- 1. Default Empty State -->
+                <div class="upload-empty-state" id="uploadEmptyState">
+                    <div class="upload-icon-wrapper">
+                        <svg class="upload-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                            <polyline points="17 8 12 3 7 8"/>
+                            <line x1="12" y1="3" x2="12" y2="15"/>
+                        </svg>
+                    </div>
+
+                    <h3 class="upload-title" id="uploadText">Drag & Drop images here, or <span class="upload-highlight">Browse Files</span></h3>
+                    <p class="upload-meta">Supports multiple JPG, PNG, WEBP files simultaneously</p>
+                    
+                    <div class="format-badges">
+                        <span class="format-tag">.JPG</span>
+                        <span class="format-tag">.JPEG</span>
+                        <span class="format-tag">.PNG</span>
+                        <span class="format-tag">.WEBP</span>
+                    </div>
+                </div>
+
+                <!-- 2. Circular Bar Animation State (shown while loading previews) -->
+                <div class="scanning-state" id="scanningState" style="display: none;">
+                    <div class="circular-progress-wrap">
+                        <svg class="circular-progress-svg" viewBox="0 0 100 100">
+                            <defs>
+                                <linearGradient id="circlePinkGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                                    <stop offset="0%" stop-color="#FF338F" />
+                                    <stop offset="100%" stop-color="#E6177D" />
+                                </linearGradient>
+                            </defs>
+                            <!-- Background Track -->
+                            <circle class="circle-track" cx="50" cy="50" r="42" />
+                            <!-- Animated Progress Ring -->
+                            <circle class="circle-bar" id="circularBarCircle" cx="50" cy="50" r="42" />
+                        </svg>
+                        <div class="circular-progress-content">
+                            <span class="circular-percent" id="circularPercent">0%</span>
+                            <span class="circular-label">LOADING</span>
+                        </div>
+                    </div>
+                    <div class="scanning-info">
+                        <p class="scanning-status">
+                            <span class="pulse-dot-pink"></span>
+                            <span id="scanStatusText">Scanning images offline...</span>
+                        </p>
+                    </div>
+                </div>
+
+                <!-- 3. Staged Files State (shown when images are queued) -->
+                <div class="staged-container" id="stagedContainer" style="display: none;">
+                    <!-- Staging Header / Toolbar -->
+                    <div class="staged-toolbar" id="stagedToolbar">
+                        <div class="staged-toolbar-left">
+                            <span class="staged-pill-badge">
+                                <span class="badge-dot"></span>
+                                <span id="stagedCountBadge">0 Images</span>
+                            </span>
+                            <span class="staged-size-text" id="stagedTotalSizeText">Total: 0 KB</span>
+                        </div>
+                        <div class="staged-toolbar-actions">
+                            <!-- Add More in header only appears when scrolling is needed -->
+                            <button type="button" class="btn-staged-action btn-add-more" id="addMoreFilesBtn" style="display: none;">
+                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                                    <line x1="12" y1="5" x2="12" y2="19"></line>
+                                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                                </svg>
+                                <span>Add More</span>
+                            </button>
+                            <button type="button" class="btn-staged-action btn-clear-staged" id="clearStagedBtn">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <polyline points="3 6 5 6 21 6"></polyline>
+                                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                                </svg>
+                                <span>Clear Queue</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Scrollable Staged Thumbnails Grid -->
+                    <div class="staged-grid-scroll" id="stagedGridScroll">
+                        <div class="staged-grid" id="stagedGrid">
+                            <!-- Injected dynamically: cards with thumbnail, name, size, and cross icon -->
+                        </div>
+                    </div>
+
+                    <!-- Drop more hint inside staged view -->
+                    <div class="staged-drop-hint">
+                        <svg class="hint-svg-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M9 18h6"></path>
+                            <path d="M10 22h4"></path>
+                            <path d="M12 2a7 7 0 0 0-7 7c0 2.5 1.5 4.5 3 6h8c1.5-1.5 3-3.5 3-6a7 7 0 0 0-7-7z"></path>
+                        </svg>
+                        <span>Drag & drop additional files here anytime</span>
+                    </div>
+                </div>
+
+                <!-- 4. Active Live Compression Circular Progress State -->
+                <div class="compressing-state" id="compressingState" style="display: none;">
+                    <div class="circular-progress-wrap">
+                        <svg class="circular-progress-svg" viewBox="0 0 100 100">
+                            <defs>
+                                <linearGradient id="circleCompressGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                                    <stop offset="0%" stop-color="#FF338F" />
+                                    <stop offset="100%" stop-color="#E6177D" />
+                                </linearGradient>
+                            </defs>
+                            <circle class="circle-track" cx="50" cy="50" r="42" />
+                            <circle class="circle-bar" id="compressCircularBar" cx="50" cy="50" r="42" stroke="url(#circleCompressGrad)" />
+                        </svg>
+                        <div class="circular-progress-content">
+                            <span class="circular-percent" id="compressCircularPercent">0%</span>
+                            <span class="circular-label">COMPRESSING</span>
+                        </div>
+                    </div>
+                    <div class="compressing-info">
+                        <h4 class="compressing-title" id="compressingTitle">Compressing Images...</h4>
+                        <p class="compressing-status">
+                            <span class="pulse-dot-pink"></span>
+                            <span id="compressingStatusText">Starting compression...</span>
+                        </p>
+                    </div>
+                </div>
+
+                <!-- 5. Completion "Save All" State inside Dropzone -->
+                <div class="completion-state" id="completionState" style="display: none;">
+                    <button type="button" class="completion-close-btn" id="completionCloseBtn" title="Close window" aria-label="Close window">
+                        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="18" y1="6" x2="6" y2="18"></line>
+                            <line x1="6" y1="6" x2="18" y2="18"></line>
+                        </svg>
+                    </button>
+                    <div class="completion-card-inner">
+                        <!-- Top Celebration Status -->
+                        <div class="completion-header">
+                            <div class="completion-badge-pill">
+                                <span class="pulse-dot"></span>
+                                <span>Compression Complete</span>
+                            </div>
+                            <h3 class="completion-title">All Images Successfully Compressed!</h3>
+                            <p class="completion-subtitle">
+                                <span id="completionFilesCount">0</span> images processed and ready to save
+                            </p>
+                        </div>
+
+                        <!-- Hidden metric elements (kept for JS compatibility) -->
+                        <span id="completionSavedText" style="display:none">0 KB</span>
+                        <span id="completionPercentBadge" style="display:none">0% SAVED</span>
+                        <span id="completionTotalImages" style="display:none">0 Files</span>
+                        <span id="completionFinalSize" style="display:none">0 KB</span>
+
+                        <!-- Action Buttons -->
+                        <div class="completion-actions">
+                            <button type="button" class="btn-completion-zip" id="completionDownloadZipBtn">
+                                <svg class="btn-completion-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                    <polyline points="7 10 12 15 17 10"></polyline>
+                                    <line x1="12" y1="15" x2="12" y2="3"></line>
+                                </svg>
+                                <span id="completionZipBtnText">Save as Zip</span>
+                            </button>
+
+                            <!-- Hidden buttons for JS compatibility -->
+                            <button type="button" id="completionUploadMoreBtn" style="display:none"></button>
+                            <button type="button" id="completionClearBtn" style="display:none"></button>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Compress CTA Action Bar -->
+            <div class="compress-action-bar" id="compressActionBar" style="display: none;">
+                <button type="button" class="btn-compress-main" id="startCompressBtn">
+                    <svg class="btn-compress-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                        <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+                    </svg>
+                    <span id="compressBtnText">Compress All (0 Images)</span>
+                </button>
+            </div>
+
+            <!-- Summary KPI Banner -->
+            <section id="summaryBanner" class="summary-card" style="display:none;">
+                <div class="summary-content">
+                    <div class="summary-left">
+                        <div class="progress-ring-container">
+                            <div class="progress-ring" id="progressCircle" style="--percent: 0%;">
+                                <div class="progress-inner">
+                                    <span id="progressPercent" class="percent-value">0%</span>
+                                    <span class="percent-label">SAVED</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="summary-info">
+                            <h2 class="summary-title" id="summaryTitle">Compression Complete!</h2>
+                            <p class="summary-detail"><span id="totalFilesText" class="stat-highlight">0</span> images compressed successfully</p>
+                            <div class="summary-stats-pills">
+                                <span class="stat-pill">Saved: <strong id="totalSaved">0 KB</strong></span>
+                                <span class="stat-pill secondary">Total: <strong id="totalOriginal">0 KB</strong></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Results Table Wrapper -->
+            <section id="tableWrapper" class="table-container" style="display:none;">
+                <div class="table-header-title">
+                    <h4>Processed Files</h4>
+                    <span class="table-badge"><span id="headerFileCount">0</span> Files</span>
+                </div>
+
+                <div class="table-responsive">
+                    <table id="filesTable" class="modern-table">
+                        <thead>
+                            <tr>
+                                <th style="width: 35%;">File Name</th>
+                                <th style="width: 15%;">Status</th>
+                                <th style="width: 14%;">Original</th>
+                                <th style="width: 14%;">Optimized</th>
+                                <th style="width: 10%;">Reduction</th>
+                                <th style="width: 12%; text-align: right;">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tableBody">
+                            <!-- Dynamic rows rendered by script.js -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Footer Summary Bar -->
+                <div class="table-footer-bar">
+                    <div class="footer-stat-item">
+                        <span class="footer-label">Total Files:</span>
+                        <span id="footerFileCount" class="footer-value">0</span>
+                    </div>
+                    <div class="footer-stat-item">
+                        <span class="footer-label">Errors:</span>
+                        <span id="footerErrorCount" class="footer-value footer-error">0</span>
+                    </div>
+                    <div class="footer-stat-item">
+                        <span class="footer-label">Original Weight:</span>
+                        <span id="footerOriginal" class="footer-value">0 KB</span>
+                    </div>
+                    <div class="footer-stat-item highlight">
+                        <span class="footer-label">Total Space Saved:</span>
+                        <span id="footerGain" class="footer-value footer-gain">0 KB</span>
+                    </div>
+                </div>
+            </section>
+
+        </main>
+
+    </div>
+
+    <!-- Offline Thumbnail Engine, ZIP Generator & Modular Application Scripts -->
+    <script src="static/thumbnailer.js"></script>
+    <script src="static/jszip.min.js"></script>
+    <script src="static/js/app-state.js"></script>
+    <script src="static/js/ui-scroller.js"></script>
+    <script src="static/js/staging-controller.js"></script>
+    <script src="static/js/compression-engine.js"></script>
+    <script src="static/js/results-controller.js"></script>
+    <script src="static/script.js"></script>
+</body>
+</html>

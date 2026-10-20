@@ -1,0 +1,23 @@
+/* ==========================================================================
+   IMRESS - Master Stylesheet Architecture
+   Theme: Luxury Pink & Crisp White
+   Orchestrates modular CSS components (each under 500 lines)
+   ========================================================================== */
+
+/* 1. Core Variables, Typography, Resets & Base Layout */
+@import './css/core.css';
+
+/* 2. Dropzone Container, Empty State & Scanning Radar */
+@import './css/dropzone.css';
+
+/* 3. Hero Completion & Download All State */
+@import './css/completion.css';
+
+/* 4. Staged Image Queue, Preview Grid & Actions */
+@import './css/staging.css';
+
+/* 5. Results Table, KPI Metrics Dashboard & Badges */
+@import './css/results.css';
+
+/* 6. Startup Splash Loading & Responsive Breakpoints */
+@import './css/startup-loading.css';
